@@ -1,5 +1,46 @@
+//! # Filtering System
+//! 
+//! This module provides a flexible filtering system for NetCDF data extraction.
+//! 
+//! ## Filter Types
+//! 
+//! - **Range filters**: Filter dimension values within a numeric range
+//! - **List filters**: Filter dimension values that match specific values
+//! - **2D Point filters**: Filter spatial coordinates (lat/lon) within tolerance
+//! - **3D Point filters**: Filter spatio-temporal coordinates (time/lat/lon) within tolerance
+//! 
+//! ## Filter Results
+//! 
+//! All filters return a [`FilterResult`] enum that preserves dimension information
+//! and coordinate relationships for proper intersection logic.
+
 use serde::{Deserialize};
 
+/// Result of applying a filter to NetCDF data.
+/// 
+/// This enum encapsulates different types of filter results while preserving
+/// dimension information for proper intersection operations.
+/// 
+/// # Examples
+/// 
+/// ```rust,no_run
+/// use nc2parquet::filters::{FilterResult, NCRangeFilter, NCFilter};
+/// 
+/// // Create a range filter for time dimension
+/// let filter = NCRangeFilter::new("time", 10.0, 20.0);
+/// 
+/// // Apply filter (assuming we have a NetCDF file)
+/// # let file = netcdf::create("/tmp/test.nc").unwrap();
+/// let result = filter.apply(&file)?;
+/// 
+/// match result {
+///     FilterResult::Single { dimension, indices } => {
+///         println!("Found {} indices in dimension {}", indices.len(), dimension);
+///     },
+///     _ => {}
+/// }
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
 #[derive(Debug, Clone)]
 pub enum FilterResult {
     /// Single dimension filter result with dimension name and indices

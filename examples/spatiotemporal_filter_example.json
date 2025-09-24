@@ -1,0 +1,22 @@
+{
+  "nc_key": "forecast_data.nc",
+  "variable_name": "wind_speed",
+  "parquet_key": "wind_speed_events.parquet",
+  "filters": [
+    {
+      "kind": "3d_point",
+      "params": {
+        "time_dimension_name": "time",
+        "lat_dimension_name": "lat",
+        "lon_dimension_name": "lon",
+        "steps": [12.0, 24.0, 36.0, 48.0],
+        "points": [
+          [25.7617, -80.1918],
+          [30.3322, -81.6557],
+          [32.0835, -81.0998]
+        ],
+        "tolerance": 0.05
+      }
+    }
+  ]
+}

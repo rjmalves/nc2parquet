@@ -1,0 +1,22 @@
+{
+  "nc_key": "climate_data.nc",
+  "variable_name": "precipitation",
+  "parquet_key": "precipitation_stations.parquet",
+  "filters": [
+    {
+      "kind": "2d_point",
+      "params": {
+        "lat_dimension_name": "latitude",
+        "lon_dimension_name": "longitude",
+        "points": [
+          [40.7128, -74.0060],
+          [34.0522, -118.2437],
+          [41.8781, -87.6298],
+          [29.7604, -95.3698],
+          [33.4484, -112.0740]
+        ],
+        "tolerance": 0.1
+      }
+    }
+  ]
+}

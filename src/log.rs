@@ -1,8 +1,8 @@
 use crate::input::JobConfig;
-use crate::filters::FilterResult;
+use std::time::{Duration};
 
 pub fn show_greeting(config_path: &str) {
-    println!("=== NetCDF to Parquet Converter ===");
+    println!("=== nc2parquet - NetCDF to Parquet Converter ===");
     println!("Loading configuration from: {}", config_path);
 }
 
@@ -32,25 +32,9 @@ pub fn show_netcdf_file_info(file: &netcdf::File) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
-pub fn show_filter_results(filter_results: &Vec<FilterResult>) {
-    println!("\nFilter Results:");
-    for (i, result) in filter_results.iter().enumerate() {
-        match result {
-            FilterResult::Single { dimension, indices } => {
-                println!("  Filter {}: {} indices for dimension '{}'", i + 1, indices.len(), dimension);
-            },
-            FilterResult::Pairs { lat_dimension, lon_dimension, pairs } => {
-                println!("  Filter {}: {} coordinate pairs for dimensions '{}', '{}'", 
-                    i + 1, pairs.len(), lat_dimension, lon_dimension);
-            },
-            FilterResult::Triplets { time_dimension, lat_dimension, lon_dimension, triplets } => {
-                println!("  Filter {}: {} coordinate triplets for dimensions '{}', '{}', '{}'", 
-                    i + 1, triplets.len(), time_dimension, lat_dimension, lon_dimension);
-            },
-        }
-    }
+
+pub fn show_farewell_with_timing(elapsed: Duration) {
+    println!("\n=== Conversion completed successfully! ===");
+    println!("Total elapsed time: {:.2?}", elapsed);
 }
 
-pub fn show_farewell() {
-    println!("\n=== Conversion completed successfully! ===");
-}

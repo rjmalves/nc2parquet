@@ -1,5 +1,6 @@
 use std::env;
-use nc2parquet::log::{show_greeting, config_echo, show_farewell};
+use std::time::Instant;
+use nc2parquet::log::{show_greeting, config_echo, show_farewell_with_timing};
 use nc2parquet::input::{JobConfig};
 use nc2parquet::process_netcdf_job;
 
@@ -21,6 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn run(config_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let start_time = Instant::now();
 
     show_greeting(config_path);
 
@@ -28,6 +30,8 @@ fn run(config_path: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     config_echo(&config);
     process_netcdf_job(&config)?;
-    show_farewell();
+    
+    let elapsed = start_time.elapsed();
+    show_farewell_with_timing(elapsed);
     Ok(())
 }

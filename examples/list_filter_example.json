@@ -1,0 +1,14 @@
+{
+  "nc_key": "ocean_data.nc",
+  "variable_name": "salinity",
+  "parquet_key": "salinity_list_filtered.parquet",
+  "filters": [
+    {
+      "kind": "list",
+      "params": {
+        "dimension_name": "depth",
+        "values": [10.0, 20.0, 50.0, 100.0, 200.0]
+      }
+    }
+  ]
+}

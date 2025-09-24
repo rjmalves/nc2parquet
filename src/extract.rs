@@ -1,7 +1,40 @@
+//! # Data Extraction
+//! 
+//! This module handles the extraction of NetCDF data into Polars DataFrames
+//! with sophisticated filtering and dimension management.
+//! 
+//! ## Key Components
+//! 
+//! - [`DimensionIndexManager`]: Manages dimension indices and filter intersections
+//! - [`extract_data_to_dataframe`]: Main extraction function with filter application
+
 use polars::prelude::*;
 use crate::filters::{FilterResult, NCFilter};
 use std::collections::{HashMap, HashSet};
 
+/// Manages dimension indices and coordinate combinations during filtering operations.
+/// 
+/// This struct maintains the state of valid indices for each dimension and handles
+/// the intersection of multiple filters while preserving coordinate relationships.
+/// 
+/// # Examples
+/// 
+/// ```rust,no_run
+/// use nc2parquet::extract::DimensionIndexManager;
+/// # let file = netcdf::create("/tmp/test.nc").unwrap();
+/// # let var = file.create_variable::<f32>("temp", &[]).unwrap();
+/// 
+/// // Create a dimension index manager for a NetCDF variable
+/// let mut manager = DimensionIndexManager::new(&var)?;
+/// 
+/// // Apply filter results to constrain the dimensions
+/// // manager.apply_filter_result(&filter_result)?;
+/// 
+/// // Get all valid coordinate combinations
+/// let combinations = manager.get_all_coordinate_combinations();
+/// println!("Found {} valid coordinate combinations", combinations.len());
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
 #[derive(Debug, Clone)]
 pub struct DimensionIndexManager {
     dimension_indices: HashMap<String, HashSet<usize>>,
@@ -165,6 +198,44 @@ impl DimensionIndexManager {
     }
 }
 
+/// Extracts NetCDF data to a Polars DataFrame with filter application.
+/// 
+/// This is the main extraction function that:
+/// 1. Creates a dimension index manager for the variable
+/// 2. Applies all filters with intersection logic
+/// 3. Extracts data only for valid coordinate combinations
+/// 4. Returns a DataFrame with coordinate and variable data
+/// 
+/// # Arguments
+/// 
+/// * `file` - The opened NetCDF file
+/// * `var` - The NetCDF variable to extract data from
+/// * `var_name` - Name of the variable for DataFrame column naming
+/// * `filters` - Vector of filters to apply
+/// 
+/// # Returns
+/// 
+/// Returns a DataFrame containing coordinate columns and the variable data,
+/// or an error if extraction fails.
+/// 
+/// # Examples
+/// 
+/// ```rust,no_run
+/// use nc2parquet::extract::extract_data_to_dataframe;
+/// use nc2parquet::filters::{NCRangeFilter, NCFilter};
+/// 
+/// # let file = netcdf::open("test.nc").unwrap();
+/// # let var = file.variable("temperature").unwrap();
+/// 
+/// // Create filters
+/// let range_filter = NCRangeFilter::new("time", 10.0, 20.0);
+/// let filters: Vec<Box<dyn NCFilter>> = vec![Box::new(range_filter)];
+/// 
+/// // Extract data with filters
+/// let df = extract_data_to_dataframe(&file, &var, "temperature", &filters)?;
+/// println!("Extracted {} rows", df.height());
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
 pub fn extract_data_to_dataframe(
     file: &netcdf::File,
     var: &netcdf::Variable,
