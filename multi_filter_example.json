@@ -1,0 +1,31 @@
+{
+  "nc_key": "hres_fullrange_det_2t.nc",
+  "variable_name": "t2",
+  "parquet_key": "multi_filter_test.parquet",
+  "filters": [
+    {
+      "kind": "range",
+      "params": {
+        "dimension_name": "time",
+        "min_value": 50.0,
+        "max_value": 60.0
+      }
+    },
+    {
+      "kind": "2d_point",
+      "params": {
+        "lat_dimension_name": "lat",
+        "lon_dimension_name": "lon",
+        "points": [
+          [-9.5, -60.5],
+          [-9.5, -60.4],
+          [-9.5, -60.3],
+          [-9.4, -60.5],
+          [-9.4, -60.4],
+          [-9.4, -60.3]
+        ],
+        "tolerance": 0.05
+      }
+    }
+  ]
+}

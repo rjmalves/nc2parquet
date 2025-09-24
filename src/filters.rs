@@ -1,42 +1,60 @@
 use serde::{Deserialize};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum FilterResult {
-    Single(Vec<usize>),
-    Pairs(Vec<(usize, usize)>),
-    Triplets(Vec<(usize, usize, usize)>),
+    /// Single dimension filter result with dimension name and indices
+    Single { 
+        dimension: String, 
+        indices: Vec<usize> 
+    },
+    /// 2D coordinate pairs (typically lat, lon)
+    Pairs { 
+        lat_dimension: String,
+        lon_dimension: String,
+        pairs: Vec<(usize, usize)> 
+    },
+    /// 3D coordinate triplets (typically time, lat, lon)
+    Triplets { 
+        time_dimension: String,
+        lat_dimension: String,
+        lon_dimension: String,
+        triplets: Vec<(usize, usize, usize)> 
+    },
 }
 
 impl FilterResult {
-    pub fn as_single(&self) -> Option<&Vec<usize>> {
-        match self {
-            FilterResult::Single(indices) => Some(indices),
-            _ => None,
+    pub fn as_single(&self) -> Option<(&String, &Vec<usize>)> {
+        if let FilterResult::Single { dimension, indices } = self {
+            Some((dimension, indices))
+        } else {
+            None
         }
     }
-    
-    pub fn as_pairs(&self) -> Option<&Vec<(usize, usize)>> {
-        match self {
-            FilterResult::Pairs(pairs) => Some(pairs),
-            _ => None,
+
+    pub fn as_pairs(&self) -> Option<(&String, &String, &Vec<(usize, usize)>)> {
+        if let FilterResult::Pairs { lat_dimension, lon_dimension, pairs } = self {
+            Some((lat_dimension, lon_dimension, pairs))
+        } else {
+            None
         }
     }
-    
-    pub fn as_triplets(&self) -> Option<&Vec<(usize, usize, usize)>> {
-        match self {
-            FilterResult::Triplets(triplets) => Some(triplets),
-            _ => None,
+
+    pub fn as_triplets(&self) -> Option<(&String, &String, &String, &Vec<(usize, usize, usize)>)> {
+        if let FilterResult::Triplets { time_dimension, lat_dimension, lon_dimension, triplets } = self {
+            Some((time_dimension, lat_dimension, lon_dimension, triplets))
+        } else {
+            None
         }
     }
-    
+
     pub fn len(&self) -> usize {
         match self {
-            FilterResult::Single(v) => v.len(),
-            FilterResult::Pairs(v) => v.len(),
-            FilterResult::Triplets(v) => v.len(),
+            FilterResult::Single { indices, .. } => indices.len(),
+            FilterResult::Pairs { pairs, .. } => pairs.len(),
+            FilterResult::Triplets { triplets, .. } => triplets.len(),
         }
     }
-    
+
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -78,7 +96,10 @@ impl NCFilter for NCRangeFilter {
                 .filter(|(_, val)| **val >= self.min_value && **val <= self.max_value)
                 .map(|(idx, _)| idx)
                 .collect();
-            Ok(FilterResult::Single(filtered_indices))
+            Ok(FilterResult::Single { 
+                dimension: self.dimension_name.clone(),
+                indices: filtered_indices 
+            })
         } else {
             Err(format!("Dimension variable '{}' not found", self.dimension_name).into())
         }
@@ -115,7 +136,10 @@ impl NCFilter for NCListFilter {
                 .filter(|(_, val)| self.values.contains(val))
                 .map(|(idx, _)| idx)
                 .collect();
-            Ok(FilterResult::Single(filtered_indices))
+            Ok(FilterResult::Single { 
+                dimension: self.dimension_name.clone(),
+                indices: filtered_indices 
+            })
         } else {
             Err(format!("Dimension variable '{}' not found", self.dimension_name).into())
         }
@@ -170,7 +194,11 @@ impl NCFilter for NC2DPointFilter {
             }
         }
 
-        Ok(FilterResult::Pairs(filtered_indices))
+        Ok(FilterResult::Pairs { 
+            lat_dimension: self.lat_dimension_name.clone(),
+            lon_dimension: self.lon_dimension_name.clone(),
+            pairs: filtered_indices 
+        })
     }
 }
 
@@ -237,7 +265,12 @@ impl NCFilter for NC3DPointFilter {
             }
         }
 
-        Ok(FilterResult::Triplets(filtered_indices))
+        Ok(FilterResult::Triplets { 
+            time_dimension: self.time_dimension_name.clone(),
+            lat_dimension: self.lat_dimension_name.clone(),
+            lon_dimension: self.lon_dimension_name.clone(),
+            triplets: filtered_indices 
+        })
     }
 }
 

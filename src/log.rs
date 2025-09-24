@@ -36,14 +36,16 @@ pub fn show_filter_results(filter_results: &Vec<FilterResult>) {
     println!("\nFilter Results:");
     for (i, result) in filter_results.iter().enumerate() {
         match result {
-            FilterResult::Single(indices) => {
-                println!("  Filter {}: {} single indices", i + 1, indices.len());
+            FilterResult::Single { dimension, indices } => {
+                println!("  Filter {}: {} indices for dimension '{}'", i + 1, indices.len(), dimension);
             },
-            FilterResult::Pairs(pairs) => {
-                println!("  Filter {}: {} coordinate pairs", i + 1, pairs.len());
+            FilterResult::Pairs { lat_dimension, lon_dimension, pairs } => {
+                println!("  Filter {}: {} coordinate pairs for dimensions '{}', '{}'", 
+                    i + 1, pairs.len(), lat_dimension, lon_dimension);
             },
-            FilterResult::Triplets(triplets) => {
-                println!("  Filter {}: {} coordinate triplets", i + 1, triplets.len());
+            FilterResult::Triplets { time_dimension, lat_dimension, lon_dimension, triplets } => {
+                println!("  Filter {}: {} coordinate triplets for dimensions '{}', '{}', '{}'", 
+                    i + 1, triplets.len(), time_dimension, lat_dimension, lon_dimension);
             },
         }
     }
