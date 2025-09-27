@@ -21,40 +21,17 @@ use serde::{Deserialize};
 /// This enum encapsulates different types of filter results while preserving
 /// dimension information for proper intersection operations.
 /// 
-/// # Examples
-/// 
-/// ```rust,no_run
-/// use nc2parquet::filters::{FilterResult, NCRangeFilter, NCFilter};
-/// 
-/// // Create a range filter for time dimension
-/// let filter = NCRangeFilter::new("time", 10.0, 20.0);
-/// 
-/// // Apply filter (assuming we have a NetCDF file)
-/// # let file = netcdf::create("/tmp/test.nc").unwrap();
-/// let result = filter.apply(&file)?;
-/// 
-/// match result {
-///     FilterResult::Single { dimension, indices } => {
-///         println!("Found {} indices in dimension {}", indices.len(), dimension);
-///     },
-///     _ => {}
-/// }
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 #[derive(Debug, Clone)]
 pub enum FilterResult {
-    /// Single dimension filter result with dimension name and indices
     Single { 
         dimension: String, 
         indices: Vec<usize> 
     },
-    /// 2D coordinate pairs (typically lat, lon)
     Pairs { 
         lat_dimension: String,
         lon_dimension: String,
         pairs: Vec<(usize, usize)> 
     },
-    /// 3D coordinate triplets (typically time, lat, lon)
     Triplets { 
         time_dimension: String,
         lat_dimension: String,

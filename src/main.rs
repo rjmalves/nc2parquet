@@ -1,14 +1,8 @@
 use std::env;
 use std::time::Instant;
 use nc2parquet::log::{show_greeting, config_echo, show_farewell_with_timing};
-use nc2parquet::input::{JobConfig};
+use nc2parquet::input::JobConfig;
 use nc2parquet::process_netcdf_job;
-
-mod log;
-mod input;
-mod filters;
-mod extract;
-mod output;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();

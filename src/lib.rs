@@ -8,38 +8,6 @@
 //! - **Filter intersection**: Apply multiple filters that intersect properly across dimensions
 //! - **Efficient processing**: Only extracts data for coordinates that match all filter criteria
 //! - **Type safety**: Strong typing with comprehensive error handling
-//! 
-//! ## Quick Start
-//! 
-//! ```rust,no_run
-//! use nc2parquet::{process_netcdf_job, input::JobConfig};
-//! 
-//! // Load configuration from JSON file
-//! let config = JobConfig::from_file("config.json").expect("Failed to load config");
-//! 
-//! // Process the NetCDF file and convert to Parquet
-//! process_netcdf_job(&config).expect("Failed to process NetCDF file");
-//! ```
-//! 
-//! ## Configuration Example
-//! 
-//! ```json
-//! {
-//!   "nc_key": "input.nc",
-//!   "variable_name": "temperature",
-//!   "parquet_key": "output.parquet",
-//!   "filters": [
-//!     {
-//!       "kind": "range",
-//!       "params": {
-//!         "dimension_name": "time",
-//!         "min_value": 10.0,
-//!         "max_value": 20.0
-//!       }
-//!     }
-//!   ]
-//! }
-//! ```
 
 pub mod log;
 pub mod input;
@@ -71,17 +39,7 @@ use crate::log::{show_netcdf_file_info};
 /// # Returns
 /// 
 /// Returns `Ok(())` on successful conversion, or an error if any step fails.
-/// 
-/// # Examples
-/// 
-/// ```rust,no_run
-/// use nc2parquet::{process_netcdf_job, input::JobConfig};
-/// 
-/// let config = JobConfig::from_file("weather_config.json")?;
-/// process_netcdf_job(&config)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
-/// 
+///
 /// # Errors
 /// 
 /// This function will return an error if:
