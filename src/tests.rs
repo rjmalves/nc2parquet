@@ -751,3 +751,124 @@ mod workflow_tests {
         assert_eq!(config.filters[2].kind(), "2d_point");
     }
 }
+
+/// Integration tests for S3 operations with real AWS (optional)
+#[cfg(test)]
+mod s3_integration_tests {
+    use super::*;
+    use crate::storage::{StorageFactory, StorageBackend};
+    
+    #[tokio::test]
+    #[ignore] // Ignore by default as it requires real AWS credentials and S3 bucket
+    async fn test_end_to_end_s3_pipeline() -> Result<(), Box<dyn std::error::Error>> {
+        // This test requires:
+        // 1. AWS credentials configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION)
+        // 2. TEST_S3_BUCKET environment variable set to a test bucket name
+        // 3. The bucket must exist and be writable
+        
+        let test_bucket = match std::env::var("TEST_S3_BUCKET") {
+            Ok(bucket) => bucket,
+            Err(_) => {
+                println!("Skipping S3 integration test - set TEST_S3_BUCKET environment variable");
+                return Ok(());
+            }
+        };
+        
+        // Upload a test NetCDF file to S3
+        let netcdf_path = get_test_data_path("simple_xy.nc");
+        let netcdf_data = std::fs::read(&netcdf_path)?;
+        
+        let storage = StorageFactory::from_path(&format!("s3://{}/test.nc", test_bucket)).await?;
+        let s3_input_path = format!("s3://{}/test-input/simple_xy.nc", test_bucket);
+        let s3_output_path = format!("s3://{}/test-output/result.parquet", test_bucket);
+        
+        // Upload NetCDF file
+        storage.write(&s3_input_path, &netcdf_data).await?;
+        
+        // Create job configuration for S3 input and output
+        let json_config = format!(r#"{{
+            "nc_key": "{}",
+            "variable_name": "data",
+            "parquet_key": "{}",
+            "filters": [
+                {{
+                    "kind": "range",
+                    "params": {{
+                        "dimension_name": "x",
+                        "min_value": 1.0,
+                        "max_value": 4.0
+                    }}
+                }}
+            ]
+        }}"#, s3_input_path, s3_output_path);
+        
+        let config = JobConfig::from_json(&json_config)?;
+        
+        // Process the job with S3 input/output
+        crate::process_netcdf_job_async(&config).await?;
+        
+        // Verify output file exists in S3
+        assert!(storage.exists(&s3_output_path).await?);
+        
+        // Download and verify the output
+        let parquet_data = storage.read(&s3_output_path).await?;
+        assert!(!parquet_data.is_empty());
+        assert!(parquet_data.len() > 100); // Basic sanity check
+        
+        println!("S3 end-to-end test passed with bucket: {}", test_bucket);
+        Ok(())
+    }
+    
+    #[tokio::test] 
+    #[ignore] // Ignore by default as it requires AWS credentials
+    async fn test_mixed_s3_local_pipeline() -> Result<(), Box<dyn std::error::Error>> {
+        let test_bucket = match std::env::var("TEST_S3_BUCKET") {
+            Ok(bucket) => bucket,
+            Err(_) => {
+                println!("Skipping mixed S3/local test - set TEST_S3_BUCKET environment variable");
+                return Ok(());
+            }
+        };
+        
+        // Create temporary output directory
+        let temp_dir = tempfile::tempdir()?;
+        let output_path = temp_dir.path().join("s3_to_local_output.parquet");
+        
+        // Upload NetCDF file to S3
+        let netcdf_path = get_test_data_path("pres_temp_4D.nc");
+        let netcdf_data = std::fs::read(&netcdf_path)?;
+        
+        let storage = StorageFactory::from_path(&format!("s3://{}/test.nc", test_bucket)).await?;
+        let s3_input_path = format!("s3://{}/mixed-test-input/pres_temp_4D.nc", test_bucket);
+        
+        storage.write(&s3_input_path, &netcdf_data).await?;
+        
+        let json_config = format!(r#"{{
+            "nc_key": "{}",
+            "variable_name": "temperature", 
+            "parquet_key": "{}",
+            "filters": [
+                {{
+                    "kind": "list",
+                    "params": {{
+                        "dimension_name": "latitude",
+                        "values": [25.0, 30.0]
+                    }}
+                }}
+            ]
+        }}"#, s3_input_path, output_path.display());
+        
+        let config = JobConfig::from_json(&json_config)?;
+        
+        // Process: S3 input -> local output
+        crate::process_netcdf_job_async(&config).await?;
+        
+        // Verify local output exists
+        assert!(output_path.exists());
+        let file_size = std::fs::metadata(&output_path)?.len();
+        assert!(file_size > 50);
+        
+        println!("Mixed S3->local test passed with bucket: {}", test_bucket);
+        Ok(())
+    }
+}

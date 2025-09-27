@@ -15,6 +15,7 @@
 
 use polars::prelude::*;
 use std::fs::File;
+use crate::storage::{StorageFactory, StorageBackend};
     
 
 /// Writes a DataFrame to a Parquet file with multiple fallback strategies.
@@ -47,6 +48,57 @@ pub fn write_dataframe_to_parquet(df: &DataFrame, output_path: &str) -> Result<(
     if let Ok(_) = try_explicit_parquet_writer(df, output_path) {
         println!("Successfully wrote parquet file: {}", output_path);
         return Ok(());
+    }
+    
+    Ok(())
+}
+
+/// Async version of DataFrame writing that supports both local files and S3.
+/// 
+/// This function provides the same functionality as `write_dataframe_to_parquet` but with
+/// support for S3 output paths. When an S3 path is detected, the Parquet file is written
+/// to a temporary location and then uploaded to S3.
+/// 
+/// # Arguments
+/// 
+/// * `df` - The DataFrame containing processed NetCDF data
+/// * `output_path` - Path where the Parquet file should be written (local or S3)
+/// 
+/// # Returns
+/// 
+/// Returns `Ok(())` on successful write, or an error if writing fails.
+/// 
+/// # Errors
+/// 
+/// This function will return an error if:
+/// - The DataFrame cannot be written to Parquet format
+/// - S3 upload fails (for S3 paths)
+/// - Local file cannot be written (for local paths)
+pub async fn write_dataframe_to_parquet_async(df: &DataFrame, output_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Writing DataFrame to parquet file: {}\n", output_path);
+    
+    // Show DataFrame info
+    println!("DataFrame shape: {:?}", df.shape());
+    println!("DataFrame schema:\n{:?}", df.schema());
+    println!("First few rows:\n{}", df.head(Some(5)));
+
+    if output_path.starts_with("s3://") {
+        // Write to temporary file and upload to S3
+        let temp_file = tempfile::NamedTempFile::new()?;
+        let temp_path = temp_file.path();
+        
+        // Write to temporary file
+        try_explicit_parquet_writer(df, temp_path.to_str().unwrap())?;
+        
+        // Upload to S3
+        let storage = StorageFactory::from_path(output_path).await?;
+        let data: Vec<u8> = tokio::fs::read(temp_path).await?;
+        storage.write(output_path, &data).await?;
+        
+        println!("Successfully wrote parquet file to S3: {}", output_path);
+    } else {
+        // Write directly to local file
+        write_dataframe_to_parquet(df, output_path)?;
     }
     
     Ok(())

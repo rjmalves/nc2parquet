@@ -1,0 +1,23 @@
+{
+    "nc_key": "s3://my-climate-bucket/weather/temperature_2023.nc",
+    "variable_name": "temperature",
+    "parquet_key": "s3://my-results-bucket/processed/temperature_filtered.parquet",
+    "filters": [
+        {
+            "kind": "range",
+            "params": {
+                "dimension_name": "latitude",
+                "min_value": 30.0,
+                "max_value": 60.0
+            }
+        },
+        {
+            "kind": "range",
+            "params": {
+                "dimension_name": "longitude",
+                "min_value": -120.0,
+                "max_value": -60.0
+            }
+        }
+    ]
+}

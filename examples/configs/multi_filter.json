@@ -1,0 +1,31 @@
+{
+    "nc_key": "examples/data/pres_temp_4D.nc",
+    "variable_name": "temperature",
+    "parquet_key": "output/multi_filter_result.parquet",
+    "filters": [
+        {
+            "kind": "range",
+            "params": {
+                "dimension_name": "latitude",
+                "min_value": 25.0,
+                "max_value": 45.0
+            }
+        },
+        {
+            "kind": "list",
+            "params": {
+                "dimension_name": "longitude",
+                "values": [-120.0, -100.0, -80.0]
+            }
+        },
+        {
+            "kind": "2d_point",
+            "params": {
+                "lat_dimension_name": "latitude",
+                "lon_dimension_name": "longitude",
+                "points": [[30.0, -120.0], [40.0, -100.0]],
+                "tolerance": 5.0
+            }
+        }
+    ]
+}

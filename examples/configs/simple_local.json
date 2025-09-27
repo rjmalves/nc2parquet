@@ -1,0 +1,15 @@
+{
+    "nc_key": "examples/data/simple_xy.nc",
+    "variable_name": "data",
+    "parquet_key": "output/simple_xy.parquet",
+    "filters": [
+        {
+            "kind": "range",
+            "params": {
+                "dimension_name": "x",
+                "min_value": 1.0,
+                "max_value": 4.0
+            }
+        }
+    ]
+}
