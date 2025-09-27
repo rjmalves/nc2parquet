@@ -20,7 +20,7 @@
 //! - **2D Point filters**: Select spatial coordinates with tolerance
 //! - **3D Point filters**: Select spatiotemporal coordinates with tolerance
 //! 
-use serde::{Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use crate::filters::{NCFilter, NCRangeFilter, NCListFilter, NC2DPointFilter, NC3DPointFilter};
@@ -29,7 +29,7 @@ use crate::filters::{NCFilter, NCRangeFilter, NCListFilter, NC2DPointFilter, NC3
 /// 
 /// This struct represents the complete configuration needed to process a NetCDF file,
 /// including input specifications, variable selection, filtering criteria, and output destination.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct JobConfig {
     pub nc_key: String,
     pub variable_name: String,
@@ -42,7 +42,7 @@ pub struct JobConfig {
 /// This enum provides a type-safe way to represent different filter types
 /// that can be applied to NetCDF data during extraction. Each variant contains
 /// the parameters specific to that filter type.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "kind")]
 pub enum FilterConfig {
     #[serde(rename = "range")]
@@ -66,7 +66,7 @@ pub enum FilterConfig {
 /// Parameters for range-based filtering.
 /// 
 /// Defines a numeric range filter that selects values within specified bounds.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct RangeParams {
     pub dimension_name: String,
     pub min_value: f64,
@@ -76,7 +76,7 @@ pub struct RangeParams {
 /// Parameters for list-based filtering.
 /// 
 /// Defines a discrete value filter that selects only specified values.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ListParams {
     pub dimension_name: String,
     pub values: Vec<f64>,
@@ -85,7 +85,7 @@ pub struct ListParams {
 /// Parameters for 2D spatial point filtering.
 /// 
 /// Defines spatial coordinate filtering with tolerance for approximate matching.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Point2DParams {
     pub lat_dimension_name: String,
     pub lon_dimension_name: String,
@@ -96,7 +96,7 @@ pub struct Point2DParams {
 /// Parameters for 3D spatiotemporal point filtering.
 /// 
 /// Defines filtering for specific time steps at specific spatial coordinates.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Point3DParams {
     pub time_dimension_name: String,
     pub lat_dimension_name: String,

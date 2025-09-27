@@ -15,9 +15,12 @@ pub mod filters;
 pub mod extract;
 pub mod output;
 pub mod storage;
+pub mod cli;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod cli_tests;
 
 use crate::input::{JobConfig};
 use crate::extract::{extract_data_to_dataframe};
