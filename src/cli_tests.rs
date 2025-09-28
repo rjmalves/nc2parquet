@@ -7,8 +7,12 @@
 mod tests {
     use clap::Parser;
     use std::path::PathBuf;
+    use std::sync::Mutex;
     
     use crate::cli::{Cli, Commands, OutputFormat, TemplateType, ConfigFormat};
+    
+    // Global mutex to ensure environment variable tests run sequentially
+    static ENV_TEST_MUTEX: Mutex<()> = Mutex::new(());
     
     /// Test basic CLI argument parsing
     #[test]
@@ -254,6 +258,9 @@ mod tests {
     /// Test environment variable handling
     #[test]
     fn test_environment_variables() {
+        // Acquire mutex to ensure exclusive access to environment variables
+        let _guard = ENV_TEST_MUTEX.lock().unwrap();
+        
         unsafe {
             std::env::set_var("NC2PARQUET_CONFIG", "/path/to/env/config.json");
             std::env::set_var("NC2PARQUET_VARIABLE", "env_temperature");

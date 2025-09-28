@@ -1,0 +1,22 @@
+{
+  "nc_key": "examples/data/pres_temp_4D.nc",
+  "parquet_key": "/tmp/multi_source_output.parquet",
+  "variable_name": "temperature",
+  "filters": [
+    {
+      "kind": "range", 
+      "params": {
+        "dimension_name": "time",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    },
+    {
+      "kind": "list",
+      "params": {
+        "dimension_name": "level", 
+        "values": [0.0, 1.0]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+    "nc_key": "examples/data/simple_xy.nc",
+    "variable_name": "data",
+    "parquet_key": "examples/output/unit_converted.parquet",
+    "filters": [],
+    "postprocessing": {
+        "name": "Unit Conversion Example",
+        "processors": [
+            {
+                "type": "RenameColumns",
+                "mappings": {
+                    "data": "temperature_kelvin"
+                }
+            },
+            {
+                "type": "UnitConvert",
+                "column": "temperature_kelvin",
+                "from_unit": "kelvin",
+                "to_unit": "celsius"
+            }
+        ]
+    }
+}

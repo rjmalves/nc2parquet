@@ -1,0 +1,75 @@
+{
+    "nc_key": "s3://climate-data/weather/temperature_2023.nc",
+    "variable_name": "air_temperature",
+    "parquet_key": "s3://processed-data/weather/temp_analysis_2023.parquet", 
+    "filters": [
+        {
+            "kind": "range",
+            "params": {
+                "dimension_name": "latitude",
+                "min_value": 30.0,
+                "max_value": 70.0
+            }
+        },
+        {
+            "kind": "range", 
+            "params": {
+                "dimension_name": "longitude",
+                "min_value": -140.0,
+                "max_value": -60.0
+            }
+        },
+        {
+            "kind": "list",
+            "params": {
+                "dimension_name": "pressure_level",
+                "values": [1000.0, 850.0, 700.0, 500.0]
+            }
+        }
+    ],
+    "postprocessing": {
+        "name": "Weather Analysis Pipeline",
+        "processors": [
+            {
+                "type": "RenameColumns",
+                "mappings": {
+                    "air_temperature": "temp_kelvin",
+                    "latitude": "lat",
+                    "longitude": "lon", 
+                    "pressure_level": "pressure_hpa",
+                    "time": "timestamp"
+                }
+            },
+            {
+                "type": "DatetimeConvert",
+                "column": "timestamp",
+                "base": "2023-01-01T00:00:00Z",
+                "unit": "hours"
+            },
+            {
+                "type": "UnitConvert",
+                "column": "temp_kelvin",
+                "from_unit": "kelvin",
+                "to_unit": "celsius"
+            },
+            {
+                "type": "ApplyFormula",
+                "target_column": "temp_fahrenheit",
+                "formula": "temp_kelvin * 9.0 / 5.0 + 32.0",
+                "source_columns": ["temp_kelvin"]
+            },
+            {
+                "type": "ApplyFormula",
+                "target_column": "is_hot_day", 
+                "formula": "temp_kelvin > 30.0",
+                "source_columns": ["temp_kelvin"]
+            },
+            {
+                "type": "ApplyFormula",
+                "target_column": "heat_index",
+                "formula": "temp_kelvin + pressure_hpa * 0.001",
+                "source_columns": ["temp_kelvin", "pressure_hpa"]
+            }
+        ]
+    }
+}

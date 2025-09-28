@@ -8,15 +8,17 @@ use clap_complete::{generate, Shell};
 use log::{info, warn, error, debug};
 use std::process;
 use std::path::Path;
+use std::time::Duration;
 use anyhow::{Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 
 use nc2parquet::{
     cli::*,
-    input::JobConfig,
+    input::{JobConfig, FilterConfig},
     process_netcdf_job_async,
     process_netcdf_job,
     storage::{StorageFactory, StorageBackend},
+    postprocess::{ProcessingPipelineConfig, ProcessorConfig},
 };
 
 #[tokio::main]
@@ -85,8 +87,14 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
         output_override,
         range_filters,
         list_filters,
+        point2d_filters,
+        point3d_filters,
         force,
         dry_run,
+        rename_columns,
+        unit_conversions,
+        kelvin_to_celsius,
+        formulas,
     } = &cli.command {
         
         info!("Starting NetCDF to Parquet conversion");
@@ -105,19 +113,101 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
             debug!("Overriding output path: {}", output_path);
         }
         
-        // Add command line filters
-        for range_filter in range_filters {
+        // Merge CLI and environment variable filters
+        let (merged_range_filters, merged_list_filters, merged_point2d_filters, merged_point3d_filters) = merge_filters(
+            range_filters.clone(),
+            list_filters.clone(),
+            point2d_filters.clone(),
+            point3d_filters.clone()
+        ).map_err(|e| anyhow::anyhow!("Filter parsing error: {}", e))?;
+        
+        // Add merged filters to configuration
+        for range_filter in &merged_range_filters {
             let filter_config = range_filter.clone().into();
             config.filters.push(filter_config);
             debug!("Added range filter: {}:{}-{}", 
                    range_filter.dimension, range_filter.min_value, range_filter.max_value);
         }
         
-        for list_filter in list_filters {
+        for list_filter in &merged_list_filters {
             let filter_config = list_filter.clone().into();
             config.filters.push(filter_config);
             debug!("Added list filter: {}:{:?}", 
                    list_filter.dimension, list_filter.values);
+        }
+        
+        for point2d_filter in &merged_point2d_filters {
+            let filter_config = point2d_filter.clone().into();
+            config.filters.push(filter_config);
+            debug!("Added 2D point filter: {},{} at ({},{}) tolerance={}", 
+                   point2d_filter.lat_dimension, point2d_filter.lon_dimension,
+                   point2d_filter.lat, point2d_filter.lon, point2d_filter.tolerance);
+        }
+        
+        for point3d_filter in &merged_point3d_filters {
+            let filter_config = point3d_filter.clone().into();
+            config.filters.push(filter_config);
+            debug!("Added 3D point filter: {},{},{} at ({},{},{}) tolerance={}", 
+                   point3d_filter.time_dimension, point3d_filter.lat_dimension, point3d_filter.lon_dimension,
+                   point3d_filter.time, point3d_filter.lat, point3d_filter.lon, point3d_filter.tolerance);
+        }
+        
+        // Build post-processing pipeline from CLI arguments
+        if !rename_columns.is_empty() || !unit_conversions.is_empty() || !kelvin_to_celsius.is_empty() || !formulas.is_empty() {
+            use std::collections::HashMap;
+            
+            let mut processors = Vec::new();
+            
+            // Add column rename processors
+            if !rename_columns.is_empty() {
+                let mut mappings = HashMap::new();
+                for rename in rename_columns {
+                    mappings.insert(rename.old_name.clone(), rename.new_name.clone());
+                    debug!("Added column rename: {} -> {}", rename.old_name, rename.new_name);
+                }
+                processors.push(ProcessorConfig::RenameColumns { mappings });
+            }
+            
+            // Add unit conversion processors
+            for unit_conversion in unit_conversions {
+                processors.push(ProcessorConfig::UnitConvert {
+                    column: unit_conversion.column.clone(),
+                    from_unit: unit_conversion.from_unit.clone(),
+                    to_unit: unit_conversion.to_unit.clone(),
+                });
+                debug!("Added unit conversion: {} from {} to {}", 
+                       unit_conversion.column, unit_conversion.from_unit, unit_conversion.to_unit);
+            }
+            
+            // Add Kelvin to Celsius conversions
+            for column in kelvin_to_celsius {
+                processors.push(ProcessorConfig::UnitConvert {
+                    column: column.clone(),
+                    from_unit: "kelvin".to_string(),
+                    to_unit: "celsius".to_string(),
+                });
+                debug!("Added Kelvin to Celsius conversion for column: {}", column);
+            }
+            
+            // Add formula processors
+            for formula in formulas {
+                processors.push(ProcessorConfig::ApplyFormula {
+                    target_column: formula.target_column.clone(),
+                    formula: formula.formula.clone(),
+                    source_columns: formula.source_columns.clone(),
+                });
+                debug!("Added formula: {} = {} (sources: {:?})", 
+                       formula.target_column, formula.formula, formula.source_columns);
+            }
+            
+            if !processors.is_empty() {
+                let pipeline_config = ProcessingPipelineConfig {
+                    name: Some("CLI Pipeline".to_string()),
+                    processors,
+                };
+                config.postprocessing = Some(pipeline_config);
+                info!("Created post-processing pipeline with {} processors", config.postprocessing.as_ref().unwrap().processors.len());
+            }
         }
         
         // Validate configuration
@@ -220,43 +310,41 @@ async fn handle_validate_command(cli: &Cli) -> Result<()> {
         let progress = if cli.quiet {
             None
         } else {
-            let pb = ProgressBar::new_spinner();
-            pb.set_style(
-                ProgressStyle::default_spinner()
-                    .template("{spinner:.blue} {msg}")
+            let progress = ProgressBar::new_spinner();
+            progress.enable_steady_tick(Duration::from_millis(80));
+            progress.set_style(
+                ProgressStyle::with_template("{spinner:.green} {msg}")
                     .unwrap()
-                    .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+                    .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]),
             );
-            pb.set_message("Loading configuration file...");
-            Some(pb)
+            progress.set_message("Validating configuration...");
+            Some(progress)
         };
         
-        let config_path = config_file.as_ref().or(cli.config.as_ref())
-            .context("No configuration file specified for validation")?;
-            
-        let config = load_config_file(config_path)
-            .context("Failed to load configuration file")?;
-            
-        if let Some(ref pb) = progress {
-            pb.set_message("Validating configuration...");
+        // Load and validate configuration  
+        let config = load_configuration(cli, &config_file.as_ref().map(|p| p.to_string_lossy().to_string()), &None, &None)?;
+        
+        if let Some(pb) = &progress {
+            pb.set_message("Running configuration checks...");
         }
         
         validate_config(&config).await?;
         
-        if let Some(pb) = progress {
-            pb.finish_with_message("✅ Configuration validation completed");
+        if let Some(pb) = &progress {
+            pb.finish_with_message("✓ Configuration valid!");
         }
         
-        info!("Configuration is valid");
+        if *detailed {
+            show_detailed_validation(&config, &cli.output_format).await?;
+        } else {
+            println!("Configuration validation passed successfully");
+        }
         
+        Ok(())
     } else {
         unreachable!("Validate command handler called with wrong command type");
     }
-    
-    Ok(())
-}
-
-/// Handle the info subcommand
+}/// Handle the info subcommand
 async fn handle_info_command(cli: &Cli) -> Result<()> {
     if let Commands::Info { file, detailed, variable, format } = &cli.command {
         
@@ -384,12 +472,39 @@ fn load_configuration(
     variable: &Option<String>
 ) -> Result<JobConfig> {
     
-    // Try to load from config file first
+    // Priority system: CLI args > Environment variables > Config file
+    
+    // Start with potential environment variable fallbacks
+    let env_input = std::env::var("NC2PARQUET_INPUT").ok();
+    let env_output = std::env::var("NC2PARQUET_OUTPUT").ok(); 
+    let env_variable = std::env::var("NC2PARQUET_VARIABLE").ok();
+    
+    // Try to load from config file first (lowest priority)
     if let Some(config_path) = &cli.config {
         debug!("Loading configuration from file: {}", config_path.display());
         let mut config = load_config_file(config_path)?;
         
-        // Override with command line arguments
+        // Override with environment variables (medium priority)  
+        if let Some(env_input_path) = &env_input {
+            if input.is_none() { // Only use env if CLI argument not provided
+                config.nc_key = env_input_path.clone();
+                debug!("Using input from environment: {}", env_input_path);
+            }
+        }
+        if let Some(env_output_path) = &env_output {
+            if output.is_none() { // Only use env if CLI argument not provided
+                config.parquet_key = env_output_path.clone();
+                debug!("Using output from environment: {}", env_output_path);
+            }
+        }
+        if let Some(env_var_name) = &env_variable {
+            if variable.is_none() { // Only use env if CLI argument not provided
+                config.variable_name = env_var_name.clone();
+                debug!("Using variable from environment: {}", env_var_name);
+            }
+        }
+        
+        // Override with command line arguments (highest priority)
         if let Some(input_path) = input {
             config.nc_key = input_path.clone();
         }
@@ -403,19 +518,29 @@ fn load_configuration(
         return Ok(config);
     }
     
-    // Create configuration from command line arguments
+    // No config file - build from CLI args and environment variables
+    // Priority: CLI args > Environment vars
     let input_path = input.as_ref()
-        .context("Input file path is required (use --config file or provide INPUT argument)")?;
+        .or(env_input.as_ref())
+        .context("Input file path is required (use --config file, provide INPUT argument, or set NC2PARQUET_INPUT environment variable)")?;
+        
     let output_path = output.as_ref()
-        .context("Output file path is required (use --config file or provide OUTPUT argument)")?;
+        .or(env_output.as_ref())
+        .context("Output file path is required (use --config file, provide OUTPUT argument, or set NC2PARQUET_OUTPUT environment variable)")?;
+        
     let var_name = variable.as_ref()
-        .context("Variable name is required (use --config file or --variable option)")?;
+        .or(env_variable.as_ref())
+        .context("Variable name is required (use --config file, --variable option, or set NC2PARQUET_VARIABLE environment variable)")?;
+    
+    debug!("Created configuration from CLI/environment - input: {}, output: {}, variable: {}", 
+           input_path, output_path, var_name);
     
     Ok(JobConfig {
         nc_key: input_path.clone(),
         variable_name: var_name.clone(),
         parquet_key: output_path.clone(),
         filters: Vec::new(),
+        postprocessing: None,
     })
 }
 
@@ -694,9 +819,89 @@ fn print_file_info_csv(_info: &NetCdfInfo) -> Result<()> {
     Ok(())
 }
 
-async fn show_detailed_validation(_config: &JobConfig, _format: &OutputFormat) -> Result<()> {
-    // Placeholder - would implement detailed validation report
-    println!("Detailed validation report not yet implemented");
+async fn show_detailed_validation(config: &JobConfig, format: &OutputFormat) -> Result<()> {
+    println!("\n=== Detailed Validation Report ===");
+    
+    // Configuration summary
+    println!("\n1. Configuration Summary:");
+    println!("   Input:        {}", config.nc_key);
+    println!("   Variable:     {}", config.variable_name);
+    println!("   Output:       {}", config.parquet_key);
+    println!("   Format:       {:?}", format);
+    
+    // Storage information
+    println!("\n2. Storage Information:");
+    let input_storage = if config.nc_key.starts_with("s3://") { "S3" } else { "Local" };
+    let output_storage = if config.parquet_key.starts_with("s3://") { "S3" } else { "Local" };
+    println!("   Input Storage:  {}", input_storage);
+    println!("   Output Storage: {}", output_storage);
+    
+    // Filter information  
+    if !config.filters.is_empty() {
+        println!("\n3. Filters Applied:");
+        println!("   Total Filters: {}", config.filters.len());
+        
+        for (i, filter) in config.filters.iter().enumerate() {
+            match filter {
+                FilterConfig::Range { params } => {
+                    println!("     {}. Range Filter: {} ({} to {})", 
+                        i + 1, params.dimension_name, params.min_value, params.max_value);
+                }
+                FilterConfig::List { params } => {
+                    println!("     {}. List Filter: {} {:?}", 
+                        i + 1, params.dimension_name, params.values);
+                }
+                FilterConfig::Point2D { params } => {
+                    println!("     {}. Point2D Filter: {},{} {} points ±{}", 
+                        i + 1, params.lat_dimension_name, params.lon_dimension_name, 
+                        params.points.len(), params.tolerance);
+                    for (j, (lat, lon)) in params.points.iter().enumerate() {
+                        if j < 3 { // Show up to 3 points
+                            println!("         Point {}: ({}, {})", j + 1, lat, lon);
+                        } else if j == 3 {
+                            println!("         ... and {} more", params.points.len() - 3);
+                            break;
+                        }
+                    }
+                }
+                FilterConfig::Point3D { params } => {
+                    println!("     {}. Point3D Filter: {},{},{} {} points, {} steps ±{}", 
+                        i + 1, params.time_dimension_name, params.lat_dimension_name, params.lon_dimension_name,
+                        params.points.len(), params.steps.len(), params.tolerance);
+                    for (j, (lat, lon)) in params.points.iter().enumerate() {
+                        if j < 2 { // Show up to 2 points for 3D
+                            println!("         Point {}: ({}, {})", j + 1, lat, lon);
+                        } else if j == 2 {
+                            println!("         ... and {} more", params.points.len() - 2);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        println!("\n3. Filters Applied: None");
+    }
+    
+    // Post-processing information
+    if let Some(postprocessing) = &config.postprocessing {
+        println!("\n4. Post-Processing:");
+        println!("   Pipeline: {} processors defined", postprocessing.processors.len());
+        for (i, processor) in postprocessing.processors.iter().enumerate() {
+            let processor_type = match processor {
+                ProcessorConfig::RenameColumns { .. } => "Rename Columns",
+                ProcessorConfig::DatetimeConvert { .. } => "Datetime Convert", 
+                ProcessorConfig::UnitConvert { .. } => "Unit Convert",
+                ProcessorConfig::Aggregate { .. } => "Aggregate",
+                ProcessorConfig::ApplyFormula { .. } => "Apply Formula",
+            };
+            println!("     {}. {}", i + 1, processor_type);
+        }
+    } else {
+        println!("\n4. Post-Processing: None");
+    }
+    
+    println!("\n✓ All validation checks passed");
     Ok(())
 }
 
@@ -708,12 +913,14 @@ fn generate_template(template_type: &TemplateType, format: &ConfigFormat) -> Res
             variable_name: "temperature".to_string(),
             parquet_key: "output.parquet".to_string(),
             filters: vec![],
+            postprocessing: None,
         },
         TemplateType::S3 => JobConfig {
             nc_key: "s3://my-bucket/input.nc".to_string(),
             variable_name: "temperature".to_string(),
             parquet_key: "s3://my-bucket/output.parquet".to_string(),
             filters: vec![],
+            postprocessing: None,
         },
         TemplateType::MultiFilter => JobConfig {
             nc_key: "weather_data.nc".to_string(),
@@ -734,6 +941,7 @@ fn generate_template(template_type: &TemplateType, format: &ConfigFormat) -> Res
                     }
                 },
             ],
+            postprocessing: None,
         },
         TemplateType::Weather => JobConfig {
             nc_key: "weather_station_data.nc".to_string(),
@@ -748,6 +956,7 @@ fn generate_template(template_type: &TemplateType, format: &ConfigFormat) -> Res
                     }
                 },
             ],
+            postprocessing: None,
         },
         TemplateType::Ocean => JobConfig {
             nc_key: "ocean_temperature.nc".to_string(),
@@ -762,6 +971,7 @@ fn generate_template(template_type: &TemplateType, format: &ConfigFormat) -> Res
                     }
                 },
             ],
+            postprocessing: None,
         },
     };
     

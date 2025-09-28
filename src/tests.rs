@@ -566,6 +566,7 @@ mod integration_tests {
             variable_name: "data".to_string(),
             parquet_key: output_path.to_string_lossy().to_string(),
             filters: vec![],
+            postprocessing: None,
         };
         
         // Run the full pipeline
@@ -601,6 +602,7 @@ mod integration_tests {
                     },
                 },
             ],
+            postprocessing: None,
         };
         
         // Run the full pipeline
@@ -635,6 +637,7 @@ mod integration_tests {
                     },
                 },
             ],
+            postprocessing: None,
         };
         
         // Run the full pipeline
@@ -674,6 +677,7 @@ mod integration_tests {
                     },
                 },
             ],
+            postprocessing: None,
         };
         
         // Run the full pipeline
@@ -749,6 +753,321 @@ mod workflow_tests {
         assert_eq!(config.filters[0].kind(), "range");
         assert_eq!(config.filters[1].kind(), "list");
         assert_eq!(config.filters[2].kind(), "2d_point");
+    }
+
+    // Sprint 6: Comprehensive Integration Tests
+    #[test]
+    fn test_sprint6_integration_local_file_with_all_features() -> Result<(), Box<dyn std::error::Error>> {
+        use crate::postprocess::*;
+        use std::collections::HashMap;
+        
+        let temp_dir = tempdir()?;
+        let output_path = temp_dir.path().join("sprint6_full_features.parquet");
+        
+        // Create comprehensive config with filtering and post-processing
+        let config = JobConfig {
+            nc_key: get_test_data_path("simple_xy.nc").to_string_lossy().to_string(),
+            variable_name: "data".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![], // Remove filters for simple_xy.nc since it doesn't have coordinate variables
+            postprocessing: Some(ProcessingPipelineConfig {
+                name: Some("Sprint 6 Integration Pipeline".to_string()),
+                processors: vec![
+                    ProcessorConfig::RenameColumns {
+                        mappings: {
+                            let mut map = HashMap::new();
+                            map.insert("data".to_string(), "temp_k".to_string());
+                            map.insert("x".to_string(), "longitude".to_string());
+                            map.insert("y".to_string(), "latitude".to_string());
+                            map
+                        },
+                    },
+                    ProcessorConfig::ApplyFormula {
+                        target_column: "temp_celsius".to_string(),
+                        formula: "temp_k - 273.15".to_string(),
+                        source_columns: vec!["temp_k".to_string()],
+                    },
+                    ProcessorConfig::UnitConvert {
+                        column: "temp_k".to_string(),
+                        from_unit: "kelvin".to_string(),
+                        to_unit: "celsius".to_string(),
+                    },
+                ],
+            }),
+        };
+        
+        // Execute the full pipeline
+        crate::process_netcdf_job(&config)?;
+        
+        // Verify the output file was created
+        assert!(output_path.exists());
+        let metadata = std::fs::metadata(&output_path)?;
+        assert!(metadata.len() > 0);
+        
+        println!("Sprint 6: Full feature integration test completed successfully");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_sprint6_integration_async_processing() -> Result<(), Box<dyn std::error::Error>> {
+        use crate::postprocess::*;
+        use std::collections::HashMap;
+        
+        let temp_dir = tempdir()?;
+        let output_path = temp_dir.path().join("sprint6_async_test.parquet");
+        
+        let config = JobConfig {
+            nc_key: get_test_data_path("pres_temp_4D.nc").to_string_lossy().to_string(),
+            variable_name: "temperature".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![
+                FilterConfig::Range {
+                    params: RangeParams {
+                        dimension_name: "latitude".to_string(),
+                        min_value: 25.0,
+                        max_value: 35.0,
+                    },
+                },
+            ],
+            postprocessing: Some(ProcessingPipelineConfig {
+                name: Some("Async Processing Test".to_string()),
+                processors: vec![
+                    ProcessorConfig::RenameColumns {
+                        mappings: {
+                            let mut map = HashMap::new();
+                            map.insert("temperature".to_string(), "temp_k".to_string());
+                            map
+                        },
+                    },
+                    ProcessorConfig::UnitConvert {
+                        column: "temp_k".to_string(),
+                        from_unit: "kelvin".to_string(),
+                        to_unit: "celsius".to_string(),
+                    },
+                ],
+            }),
+        };
+        
+        // Execute async pipeline
+        crate::process_netcdf_job_async(&config).await?;
+        
+        assert!(output_path.exists());
+        let metadata = std::fs::metadata(&output_path)?;
+        assert!(metadata.len() > 0);
+        
+        println!("Sprint 6: Async processing with post-processing completed");
+        Ok(())
+    }
+
+    #[test]
+    fn test_sprint6_integration_complex_pipeline_chaining() -> Result<(), Box<dyn std::error::Error>> {
+        use crate::postprocess::*;
+        use std::collections::HashMap;
+        
+        let temp_dir = tempdir()?;
+        let output_path = temp_dir.path().join("sprint6_complex_pipeline.parquet");
+        
+        // Test complex pipeline with multiple processors in sequence
+        let config = JobConfig {
+            nc_key: get_test_data_path("simple_xy.nc").to_string_lossy().to_string(),
+            variable_name: "data".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![], // Remove filters for simple_xy.nc
+            postprocessing: Some(ProcessingPipelineConfig {
+                name: Some("Complex Pipeline Chaining Test".to_string()),
+                processors: vec![
+                    // Step 1: Rename all columns
+                    ProcessorConfig::RenameColumns {
+                        mappings: {
+                            let mut map = HashMap::new();
+                            map.insert("data".to_string(), "temp_k".to_string());
+                            map.insert("x".to_string(), "lon".to_string());
+                            map.insert("y".to_string(), "lat".to_string());
+                            map
+                        },
+                    },
+                    // Step 2: Add formula column based on renamed column
+                    ProcessorConfig::ApplyFormula {
+                        target_column: "temp_celsius".to_string(),
+                        formula: "temp_k - 273.15".to_string(),
+                        source_columns: vec!["temp_k".to_string()],
+                    },
+                    // Step 3: Add another simple formula
+                    ProcessorConfig::ApplyFormula {
+                        target_column: "temp_doubled".to_string(),
+                        formula: "temp_k * 2.0".to_string(),
+                        source_columns: vec!["temp_k".to_string()],
+                    },
+                    // Step 4: Unit conversion on original temperature column
+                    ProcessorConfig::UnitConvert {
+                        column: "temp_k".to_string(),
+                        from_unit: "kelvin".to_string(),
+                        to_unit: "celsius".to_string(),
+                    },
+                ],
+            }),
+        };
+        
+        crate::process_netcdf_job(&config)?;
+        
+        assert!(output_path.exists());
+        let metadata = std::fs::metadata(&output_path)?;
+        assert!(metadata.len() > 0);
+        
+        println!("Sprint 6: Complex pipeline chaining test completed successfully");
+        Ok(())
+    }
+
+    #[test]
+    fn test_sprint6_integration_error_handling() {
+        let temp_dir = tempdir().unwrap();
+        let output_path = temp_dir.path().join("should_not_exist.parquet");
+        
+        // Test with nonexistent input file - should fail gracefully
+        let config = JobConfig {
+            nc_key: "nonexistent_file.nc".to_string(),
+            variable_name: "data".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![],
+            postprocessing: None,
+        };
+        
+        let result = crate::process_netcdf_job(&config);
+        assert!(result.is_err(), "Should fail with nonexistent input file");
+        assert!(!output_path.exists(), "Output file should not be created on error");
+        
+        // Test with invalid variable name - should fail gracefully
+        let config = JobConfig {
+            nc_key: get_test_data_path("simple_xy.nc").to_string_lossy().to_string(),
+            variable_name: "nonexistent_variable".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![],
+            postprocessing: None,
+        };
+        
+        let result = crate::process_netcdf_job(&config);
+        assert!(result.is_err(), "Should fail with nonexistent variable");
+        
+        // Test with invalid dimension in filter - should fail gracefully
+        let config = JobConfig {
+            nc_key: get_test_data_path("simple_xy.nc").to_string_lossy().to_string(),
+            variable_name: "data".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![
+                FilterConfig::Range {
+                    params: RangeParams {
+                        dimension_name: "nonexistent_dimension".to_string(),
+                        min_value: 0.0,
+                        max_value: 10.0,
+                    },
+                },
+            ],
+            postprocessing: None,
+        };
+        
+        let result = crate::process_netcdf_job(&config);
+        assert!(result.is_err(), "Should fail with nonexistent dimension");
+        
+        println!("Sprint 6: Error handling tests completed successfully");
+    }
+
+    #[test]
+    fn test_sprint6_performance_benchmarking() -> Result<(), Box<dyn std::error::Error>> {
+        use std::time::Instant;
+        
+        let temp_dir = tempdir()?;
+        let output_path = temp_dir.path().join("performance_test.parquet");
+        
+        // Benchmark basic conversion
+        let start = Instant::now();
+        let config = JobConfig {
+            nc_key: get_test_data_path("simple_xy.nc").to_string_lossy().to_string(),
+            variable_name: "data".to_string(),
+            parquet_key: output_path.to_string_lossy().to_string(),
+            filters: vec![],
+            postprocessing: None,
+        };
+        
+        crate::process_netcdf_job(&config)?;
+        let duration = start.elapsed();
+        println!("Sprint 6: Basic conversion took: {:?}", duration);
+        
+        // Benchmark with post-processing
+        let output_path2 = temp_dir.path().join("performance_postprocess.parquet");
+        let start = Instant::now();
+        let config_with_processing = JobConfig {
+            nc_key: get_test_data_path("simple_xy.nc").to_string_lossy().to_string(),
+            variable_name: "data".to_string(),
+            parquet_key: output_path2.to_string_lossy().to_string(),
+            filters: vec![],
+            postprocessing: Some(crate::postprocess::ProcessingPipelineConfig {
+                name: Some("Performance Test Pipeline".to_string()),
+                processors: vec![
+                    crate::postprocess::ProcessorConfig::RenameColumns {
+                        mappings: {
+                            let mut map = std::collections::HashMap::new();
+                            map.insert("data".to_string(), "measurement".to_string());
+                            map
+                        },
+                    },
+                    crate::postprocess::ProcessorConfig::ApplyFormula {
+                        target_column: "measurement_squared".to_string(),
+                        formula: "measurement * measurement".to_string(),
+                        source_columns: vec!["measurement".to_string()],
+                    },
+                ],
+            }),
+        };
+        
+        crate::process_netcdf_job(&config_with_processing)?;
+        let duration_with_processing = start.elapsed();
+        println!("Sprint 6: Conversion with post-processing took: {:?}", duration_with_processing);
+        
+        // Verify post-processing overhead is reasonable
+        let processing_overhead = duration_with_processing.saturating_sub(duration);
+        println!("Sprint 6: Post-processing overhead: {:?}", processing_overhead);
+        
+        // Basic performance assertion - post-processing shouldn't take more than 10x longer
+        assert!(duration_with_processing < duration * 10, 
+                "Post-processing should not add excessive overhead");
+        
+        println!("Sprint 6: Performance benchmarking completed successfully");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_sprint6_async_vs_sync_performance() -> Result<(), Box<dyn std::error::Error>> {
+        use std::time::Instant;
+        
+        let temp_dir = tempdir()?;
+        let sync_output = temp_dir.path().join("sync_performance.parquet");
+        let async_output = temp_dir.path().join("async_performance.parquet");
+        
+        let config = JobConfig {
+            nc_key: get_test_data_path("pres_temp_4D.nc").to_string_lossy().to_string(),
+            variable_name: "temperature".to_string(),
+            parquet_key: sync_output.to_string_lossy().to_string(),
+            filters: vec![],
+            postprocessing: None,
+        };
+        
+        // Benchmark sync processing
+        let start = Instant::now();
+        crate::process_netcdf_job(&config)?;
+        let sync_duration = start.elapsed();
+        println!("Sprint 6: Sync processing took: {:?}", sync_duration);
+        
+        // Benchmark async processing
+        let mut async_config = config.clone();
+        async_config.parquet_key = async_output.to_string_lossy().to_string();
+        
+        let start = Instant::now();
+        crate::process_netcdf_job_async(&async_config).await?;
+        let async_duration = start.elapsed();
+        println!("Sprint 6: Async processing took: {:?}", async_duration);
+        
+        println!("Sprint 6: Async vs Sync performance comparison completed");
+        Ok(())
     }
 }
 
@@ -870,5 +1189,269 @@ mod s3_integration_tests {
         
         println!("Mixed S3->local test passed with bucket: {}", test_bucket);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod postprocess_tests {
+    use crate::postprocess::*;
+    use polars::prelude::*;
+    use std::collections::HashMap;
+
+    /// Create a test DataFrame for processor testing
+    fn create_test_dataframe() -> DataFrame {
+        df! {
+            "temperature" => [273.15, 283.15, 293.15, 303.15],
+            "pressure" => [1013.25, 1012.0, 1010.5, 1009.0],
+            "humidity" => [60.0, 65.0, 70.0, 75.0],
+            "time_offset" => [0.0, 1.0, 2.0, 3.0], // hours since base
+        }.unwrap()
+    }
+
+    #[test]
+    fn test_column_renamer() {
+        let df = create_test_dataframe();
+        let mut mappings = HashMap::new();
+        mappings.insert("temperature".to_string(), "temp_k".to_string());
+        mappings.insert("pressure".to_string(), "pres_hpa".to_string());
+        
+        let processor = ColumnRenamer::new(mappings);
+        let result = processor.process(df).unwrap();
+        
+        let columns: Vec<&str> = result.get_column_names().iter().map(|s| s.as_str()).collect();
+        assert!(columns.contains(&"temp_k"));
+        assert!(columns.contains(&"pres_hpa"));
+        assert!(columns.contains(&"humidity"));
+        assert!(!columns.contains(&"temperature"));
+        assert!(!columns.contains(&"pressure"));
+    }
+
+    #[test]
+    fn test_unit_converter_kelvin_to_celsius() {
+        let df = create_test_dataframe();
+        let processor = UnitConverter::new(
+            "temperature".to_string(),
+            "kelvin".to_string(),
+            "celsius".to_string()
+        );
+        
+        let result = processor.process(df).unwrap();
+        let temp_col = result.column("temperature").unwrap();
+        let values: Vec<f64> = temp_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        
+        // 273.15K = 0°C, 283.15K = 10°C, etc.
+        assert!((values[0] - 0.0).abs() < 1e-10);
+        assert!((values[1] - 10.0).abs() < 1e-10);
+        assert!((values[2] - 20.0).abs() < 1e-10);
+        assert!((values[3] - 30.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_unit_converter_multiplication() {
+        let df = create_test_dataframe();
+        let processor = UnitConverter::with_conversion_factor(
+            "pressure".to_string(),
+            "hpa".to_string(),
+            "pa".to_string(),
+            100.0 // hPa to Pa conversion factor
+        );
+        
+        let result = processor.process(df).unwrap();
+        let pres_col = result.column("pressure").unwrap();
+        let values: Vec<f64> = pres_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        
+        // Should be multiplied by conversion factor (100.0 for hPa->Pa)
+        assert!((values[0] - 101325.0).abs() < 1e-6);
+        assert!((values[1] - 101200.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_aggregator() {
+        let df = df! {
+            "station" => ["A", "A", "B", "B", "A", "B"],
+            "temperature" => [20.0, 22.0, 18.0, 19.0, 21.0, 17.0],
+            "pressure" => [1013.0, 1012.0, 1015.0, 1014.0, 1013.5, 1016.0],
+        }.unwrap();
+
+        let group_by = vec!["station".to_string()];
+        let mut aggregations = HashMap::new();
+        aggregations.insert("temperature".to_string(), AggregationOp::Mean);
+        aggregations.insert("pressure".to_string(), AggregationOp::Max);
+        
+        let processor = Aggregator::new(group_by, aggregations);
+        let result = processor.process(df).unwrap();
+        
+        // Should have 2 rows (one per station)
+        assert_eq!(result.height(), 2);
+        
+        // Check column names
+        let columns: Vec<&str> = result.get_column_names().iter().map(|s| s.as_str()).collect();
+        assert!(columns.contains(&"station"));
+        assert!(columns.contains(&"temperature_mean"));
+        assert!(columns.contains(&"pressure_max"));
+    }
+
+    #[test]
+    fn test_formula_applier_arithmetic() {
+        let df = create_test_dataframe();
+        let processor = FormulaApplier::new(
+            "apparent_temp".to_string(),
+            "temperature + humidity".to_string(),
+            vec!["temperature".to_string(), "humidity".to_string()]
+        );
+        
+        let result = processor.process(df).unwrap();
+        
+        // Should have new column
+        let columns: Vec<&str> = result.get_column_names().iter().map(|s| s.as_str()).collect();
+        assert!(columns.contains(&"apparent_temp"));
+        
+        let new_col = result.column("apparent_temp").unwrap();
+        let values: Vec<f64> = new_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        
+        // First value: 273.15 + 60.0 = 333.15
+        assert!((values[0] - 333.15).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_formula_applier_sqrt() {
+        let df = df! {
+            "value" => [4.0, 9.0, 16.0, 25.0],
+        }.unwrap();
+        
+        let processor = FormulaApplier::new(
+            "sqrt_value".to_string(),
+            "sqrt(value)".to_string(),
+            vec!["value".to_string()]
+        );
+        
+        let result = processor.process(df).unwrap();
+        let new_col = result.column("sqrt_value").unwrap();
+        let values: Vec<f64> = new_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        
+        assert!((values[0] - 2.0).abs() < 1e-10);
+        assert!((values[1] - 3.0).abs() < 1e-10);
+        assert!((values[2] - 4.0).abs() < 1e-10);
+        assert!((values[3] - 5.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_processing_pipeline() {
+        let df = create_test_dataframe();
+        let mut pipeline = ProcessingPipeline::new();
+        
+        // Add column renamer
+        let mut mappings = HashMap::new();
+        mappings.insert("temperature".to_string(), "temp".to_string());
+        pipeline.add_processor(Box::new(ColumnRenamer::new(mappings)));
+        
+        // Add unit converter
+        let converter = UnitConverter::new(
+            "temp".to_string(),
+            "kelvin".to_string(), 
+            "celsius".to_string()
+        );
+        pipeline.add_processor(Box::new(converter));
+        
+        let result = pipeline.execute(df).unwrap();
+        
+        // Check that both processors were applied
+        let columns: Vec<&str> = result.get_column_names().iter().map(|s| s.as_str()).collect();
+        assert!(columns.contains(&"temp"));
+        assert!(!columns.contains(&"temperature"));
+        
+        // Check temperature was converted to Celsius
+        let temp_col = result.column("temp").unwrap();
+        let values: Vec<f64> = temp_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        assert!((values[0] - 0.0).abs() < 1e-10); // 273.15K = 0°C
+    }
+
+    #[test]
+    fn test_create_processor_from_config() {
+        // Test RenameColumns processor creation
+        let mut mappings = HashMap::new();
+        mappings.insert("old_name".to_string(), "new_name".to_string());
+        let config = ProcessorConfig::RenameColumns { mappings };
+        
+        let processor = create_processor(&config).unwrap();
+        assert_eq!(processor.name(), "ColumnRenamer");
+        assert_eq!(processor.description(), "Renames columns based on provided mappings");
+    }
+
+    #[test]
+    fn test_unit_converter_with_config() {
+        let config = ProcessorConfig::UnitConvert {
+            column: "temperature".to_string(),
+            from_unit: "kelvin".to_string(),
+            to_unit: "celsius".to_string(),
+        };
+        
+        let processor = create_processor(&config).unwrap();
+        assert_eq!(processor.name(), "UnitConverter");
+        
+        // Test with actual data
+        let df = create_test_dataframe();
+        let result = processor.process(df).unwrap();
+        
+        let temp_col = result.column("temperature").unwrap();
+        let values: Vec<f64> = temp_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        assert!((values[0] - 0.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_error_handling() {
+        let df = create_test_dataframe();
+        
+        // Test with non-existent column
+        let processor = UnitConverter::new(
+            "nonexistent".to_string(),
+            "kelvin".to_string(),
+            "celsius".to_string()
+        );
+        
+        let result = processor.process(df);
+        assert!(result.is_err());
+        
+        if let Err(PostProcessError::ColumnNotFound(col)) = result {
+            assert_eq!(col, "nonexistent");
+        } else {
+            panic!("Expected ColumnNotFound error");
+        }
+    }
+
+    #[test]
+    fn test_pipeline_from_config() {
+        let config = ProcessingPipelineConfig {
+            name: Some("Test Pipeline".to_string()),
+            processors: vec![
+                ProcessorConfig::RenameColumns {
+                    mappings: {
+                        let mut map = HashMap::new();
+                        map.insert("temperature".to_string(), "temp".to_string());
+                        map
+                    },
+                },
+                ProcessorConfig::UnitConvert {
+                    column: "temp".to_string(),
+                    from_unit: "kelvin".to_string(),
+                    to_unit: "celsius".to_string(),
+                },
+            ],
+        };
+        
+        let mut pipeline = ProcessingPipeline::from_config(&config).unwrap();
+        assert_eq!(pipeline.name(), "Test Pipeline");
+        
+        let df = create_test_dataframe();
+        let result = pipeline.execute(df).unwrap();
+        
+        // Verify both processors were applied
+        let columns: Vec<&str> = result.get_column_names().iter().map(|s| s.as_str()).collect();
+        assert!(columns.contains(&"temp"));
+        assert!(!columns.contains(&"temperature"));
+        
+        let temp_col = result.column("temp").unwrap();
+        let values: Vec<f64> = temp_col.f64().unwrap().into_iter().map(|v| v.unwrap()).collect();
+        assert!((values[0] - 0.0).abs() < 1e-10);
     }
 }

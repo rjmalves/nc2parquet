@@ -1,0 +1,19 @@
+{
+    "nc_key": "examples/data/simple_xy.nc",
+    "variable_name": "data",
+    "parquet_key": "examples/output/renamed_columns.parquet",
+    "filters": [],
+    "postprocessing": {
+        "name": "Column Renaming Example",
+        "processors": [
+            {
+                "type": "RenameColumns",
+                "mappings": {
+                    "data": "temperature",
+                    "x": "longitude", 
+                    "y": "latitude"
+                }
+            }
+        ]
+    }
+}

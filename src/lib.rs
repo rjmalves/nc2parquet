@@ -7,6 +7,7 @@
 //! - **Multiple filter types**: Range filters, list filters, 2D point filters, and 3D point filters
 //! - **Filter intersection**: Apply multiple filters that intersect properly across dimensions
 //! - **Efficient processing**: Only extracts data for coordinates that match all filter criteria
+//! - **Post-processing framework**: Transform DataFrames with built-in processors and custom pipelines
 //! - **Type safety**: Strong typing with comprehensive error handling
 
 pub mod log;
@@ -16,6 +17,7 @@ pub mod extract;
 pub mod output;
 pub mod storage;
 pub mod cli;
+pub mod postprocess;
 
 #[cfg(test)]
 mod tests;
@@ -64,7 +66,15 @@ pub fn process_netcdf_job(config: &JobConfig) -> Result<(), Box<dyn std::error::
         filters.push(filter);
     }
 
-    let df = extract_data_to_dataframe(&file, &var, &config.variable_name, &filters)?;
+    let mut df = extract_data_to_dataframe(&file, &var, &config.variable_name, &filters)?;
+    
+    // Apply post-processing if configured
+    if let Some(ref postprocess_config) = config.postprocessing {
+        use crate::postprocess::ProcessingPipeline;
+        let mut pipeline = ProcessingPipeline::from_config(postprocess_config)?;
+        df = pipeline.execute(df)?;
+    }
+    
     write_dataframe_to_parquet(&df, &config.parquet_key)?;
     file.close()?;
 
@@ -126,7 +136,14 @@ pub async fn process_netcdf_job_async(config: &JobConfig) -> Result<(), Box<dyn 
         filters.push(filter);
     }
 
-    let df = extract_data_to_dataframe(&file, &var, &config.variable_name, &filters)?;
+    let mut df = extract_data_to_dataframe(&file, &var, &config.variable_name, &filters)?;
+    
+    // Apply post-processing if configured
+    if let Some(ref postprocess_config) = config.postprocessing {
+        use crate::postprocess::ProcessingPipeline;
+        let mut pipeline = ProcessingPipeline::from_config(postprocess_config)?;
+        df = pipeline.execute(df)?;
+    }
     
     // Check if output is S3 path
     if config.parquet_key.starts_with("s3://") {

@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use crate::filters::{NCFilter, NCRangeFilter, NCListFilter, NC2DPointFilter, NC3DPointFilter};
+use crate::postprocess::ProcessingPipelineConfig;
 
 /// Main configuration structure for nc2parquet jobs.
 /// 
@@ -35,6 +36,9 @@ pub struct JobConfig {
     pub variable_name: String,
     pub filters: Vec<FilterConfig>,
     pub parquet_key: String,
+    /// Optional post-processing pipeline configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub postprocessing: Option<ProcessingPipelineConfig>,
 }
 
 /// Enumeration of all supported filter configurations.

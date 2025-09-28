@@ -1,0 +1,47 @@
+# Git
+.git/
+.gitignore
+
+# Rust build artifacts
+target/
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+*.tmp
+*.log
+
+# Documentation build
+book/
+
+# AWS credentials (should be mounted)
+.aws/
+
+# Local test files
+test_*.nc
+test_*.parquet
+*.test
+
+# Python virtual environment
+.venv/
+venv/
+
+# Node modules (if any)
+node_modules/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# CI/CD
+.github/
