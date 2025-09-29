@@ -26,5 +26,4 @@ target
 /target
 
 # Data file formats
-*.nc
 *.parquet
