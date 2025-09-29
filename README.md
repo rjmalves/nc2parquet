@@ -11,7 +11,7 @@ A high-performance Rust library and CLI tool for converting NetCDF files to Parq
 🔧 **Multi-Source Configuration**: CLI arguments, environment variables, and JSON/YAML configuration files  
 🛠️ **Post-Processing Framework**: Built-in DataFrame transformations including column renaming, unit conversion, and formula application  
 🖥️ **Professional CLI**: Comprehensive command-line interface with progress indicators, logging, and shell completions  
-🧪 **Well Tested**: Comprehensive test suite with 80+ tests covering all features  
+🧪 **Well Tested**: Comprehensive test suite with 80+ tests covering all features
 
 ## Installation
 
@@ -67,8 +67,14 @@ nc2parquet template s3 --format yaml -o s3-config.yaml
 # Validate configurations
 nc2parquet validate config.json --detailed
 
-# Get file information
-nc2parquet info data.nc --format json --detailed
+# File information and inspection
+nc2parquet info data.nc                           # Basic file info (human-readable)
+nc2parquet info data.nc --detailed                # Include global attributes
+nc2parquet info data.nc --variable temperature    # Show specific variable info
+nc2parquet info data.nc --format json             # JSON output for scripting
+nc2parquet info data.nc --format yaml             # YAML output
+nc2parquet info data.nc --format csv              # CSV output (variables table)
+nc2parquet info s3://bucket/data.nc --detailed    # Works with S3 files too
 
 # Generate shell completions
 nc2parquet completions bash > ~/.bash_completion.d/nc2parquet
@@ -100,7 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ]
     }
     "#)?;
-    
+
     process_netcdf_job_async(&config).await?;
     Ok(())
 }
@@ -162,9 +168,115 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ],
         }),
     };
-    
+
     process_netcdf_job_async(&config).await?;
     Ok(())
+}
+```
+
+## File Information and Inspection
+
+The `info` subcommand provides comprehensive NetCDF file analysis capabilities:
+
+### Basic Usage
+
+```bash
+# Display file structure and metadata
+nc2parquet info temperature_data.nc
+```
+
+**Output:**
+
+```
+NetCDF File Information:
+  Path: temperature_data.nc
+  File Size: 2.73 MB
+  Dimensions: 4 total
+    level (2)
+    latitude (6)
+    longitude (12)
+    time (2, unlimited)
+  Variables: 4 total
+    latitude (Float(F32)) - dimensions: [latitude]
+      @units: Str("degrees_north")
+    longitude (Float(F32)) - dimensions: [longitude]
+      @units: Str("degrees_east")
+    pressure (Float(F32)) - dimensions: [time, level, latitude, longitude]
+      @units: Str("hPa")
+    temperature (Float(F32)) - dimensions: [time, level, latitude, longitude]
+      @units: Str("celsius")
+```
+
+### Advanced Features
+
+**Detailed Information:**
+
+```bash
+# Include global attributes and extended metadata
+nc2parquet info data.nc --detailed
+```
+
+**Variable-Specific Analysis:**
+
+```bash
+# Focus on a specific variable
+nc2parquet info ocean_data.nc --variable sea_surface_temperature
+```
+
+**Multiple Output Formats:**
+
+```bash
+# JSON format for programmatic use
+nc2parquet info data.nc --format json > file_info.json
+
+# YAML format for human-readable structured output
+nc2parquet info data.nc --format yaml
+
+# CSV format for variable analysis (tabular data)
+nc2parquet info data.nc --format csv > variables.csv
+```
+
+**Cloud Storage Support:**
+
+```bash
+# Analyze S3-hosted NetCDF files directly
+nc2parquet info s3://climate-data/global_temperature.nc --detailed
+```
+
+### JSON Output Structure
+
+The JSON output provides a complete machine-readable representation:
+
+```json
+{
+  "path": "temperature_data.nc",
+  "file_size": 2784,
+  "total_dimensions": 4,
+  "total_variables": 4,
+  "dimensions": [
+    {
+      "name": "level",
+      "length": 2,
+      "is_unlimited": false
+    },
+    {
+      "name": "time",
+      "length": 2,
+      "is_unlimited": true
+    }
+  ],
+  "variables": [
+    {
+      "name": "temperature",
+      "data_type": "Float(F32)",
+      "dimensions": ["time", "level", "latitude", "longitude"],
+      "shape": [2, 2, 6, 12],
+      "attributes": {
+        "units": "Str(\"celsius\")"
+      }
+    }
+  ],
+  "global_attributes": {}
 }
 ```
 
@@ -173,26 +285,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 nc2parquet supports both local filesystem and Amazon S3 storage:
 
 ### Local Files
+
 ```json
 {
-    "nc_key": "/path/to/input.nc",
-    "parquet_key": "/path/to/output.parquet"
+  "nc_key": "/path/to/input.nc",
+  "parquet_key": "/path/to/output.parquet"
 }
 ```
 
 ### Amazon S3
+
 ```json
 {
-    "nc_key": "s3://my-bucket/path/to/input.nc",
-    "parquet_key": "s3://my-bucket/path/to/output.parquet"
+  "nc_key": "s3://my-bucket/path/to/input.nc",
+  "parquet_key": "s3://my-bucket/path/to/output.parquet"
 }
 ```
 
 ### Mixed Storage
+
 ```json
 {
-    "nc_key": "s3://input-bucket/data.nc",
-    "parquet_key": "/local/path/output.parquet"
+  "nc_key": "s3://input-bucket/data.nc",
+  "parquet_key": "/local/path/output.parquet"
 }
 ```
 
@@ -201,6 +316,7 @@ nc2parquet supports both local filesystem and Amazon S3 storage:
 For S3 support, configure AWS credentials using any of these methods:
 
 ### Environment Variables
+
 ```bash
 export AWS_ACCESS_KEY_ID=your_access_key
 export AWS_SECRET_ACCESS_KEY=your_secret_key
@@ -208,6 +324,7 @@ export AWS_DEFAULT_REGION=us-east-1
 ```
 
 ### AWS Credentials File
+
 ```ini
 # ~/.aws/credentials
 [default]
@@ -220,6 +337,7 @@ region = us-east-1
 ```
 
 ### IAM Roles
+
 When running on AWS infrastructure (EC2, Lambda, ECS), IAM roles are automatically used.
 
 ## Filter Types
@@ -227,148 +345,161 @@ When running on AWS infrastructure (EC2, Lambda, ECS), IAM roles are automatical
 nc2parquet supports four types of filters that can be combined for precise data extraction:
 
 ### 1. Range Filter
+
 Selects values within a numeric range:
 
 ```json
 {
-    "kind": "range",
-    "params": {
-        "dimension_name": "temperature",
-        "min_value": -10.0,
-        "max_value": 35.0
-    }
+  "kind": "range",
+  "params": {
+    "dimension_name": "temperature",
+    "min_value": -10.0,
+    "max_value": 35.0
+  }
 }
 ```
 
 ### 2. List Filter
+
 Selects specific discrete values:
 
 ```json
 {
-    "kind": "list",
-    "params": {
-        "dimension_name": "pressure_level",
-        "values": [850.0, 500.0, 200.0]
-    }
+  "kind": "list",
+  "params": {
+    "dimension_name": "pressure_level",
+    "values": [850.0, 500.0, 200.0]
+  }
 }
 ```
 
 ### 3. 2D Point Filter
+
 Selects spatial coordinates with tolerance:
 
 ```json
 {
-    "kind": "2d_point",
-    "params": {
-        "lat_dimension_name": "latitude",
-        "lon_dimension_name": "longitude", 
-        "points": [[40.7, -74.0], [51.5, -0.1]],
-        "tolerance": 0.1
-    }
+  "kind": "2d_point",
+  "params": {
+    "lat_dimension_name": "latitude",
+    "lon_dimension_name": "longitude",
+    "points": [
+      [40.7, -74.0],
+      [51.5, -0.1]
+    ],
+    "tolerance": 0.1
+  }
 }
 ```
 
 ### 4. 3D Point Filter
+
 Selects spatiotemporal coordinates:
 
 ```json
 {
-    "kind": "3d_point",
-    "params": {
-        "time_dimension_name": "time",
-        "lat_dimension_name": "latitude",
-        "lon_dimension_name": "longitude",
-        "steps": [0.0, 6.0, 12.0],
-        "points": [[40.7, -74.0], [51.5, -0.1]],
-        "tolerance": 0.1
-    }
+  "kind": "3d_point",
+  "params": {
+    "time_dimension_name": "time",
+    "lat_dimension_name": "latitude",
+    "lon_dimension_name": "longitude",
+    "steps": [0.0, 6.0, 12.0],
+    "points": [
+      [40.7, -74.0],
+      [51.5, -0.1]
+    ],
+    "tolerance": 0.1
+  }
 }
 ```
 
 ## Configuration Examples
 
 ### Simple Weather Data Extraction
+
 ```json
 {
-    "nc_key": "weather_data.nc",
-    "variable_name": "temperature",
-    "parquet_key": "temperature_filtered.parquet",
-    "filters": [
-        {
-            "kind": "range",
-            "params": {
-                "dimension_name": "latitude",
-                "min_value": 30.0,
-                "max_value": 45.0
-            }
-        }
-    ]
+  "nc_key": "weather_data.nc",
+  "variable_name": "temperature",
+  "parquet_key": "temperature_filtered.parquet",
+  "filters": [
+    {
+      "kind": "range",
+      "params": {
+        "dimension_name": "latitude",
+        "min_value": 30.0,
+        "max_value": 45.0
+      }
+    }
+  ]
 }
 ```
 
 ### Multi-Filter Climate Analysis
+
 ```json
 {
-    "nc_key": "s3://climate-data/global_temps.nc",
-    "variable_name": "temperature",
-    "parquet_key": "s3://results/urban_temps.parquet",
-    "filters": [
-        {
-            "kind": "range",
-            "params": {
-                "dimension_name": "time",
-                "min_value": 20200101.0,
-                "max_value": 20231231.0
-            }
-        },
-        {
-            "kind": "2d_point",
-            "params": {
-                "lat_dimension_name": "latitude",
-                "lon_dimension_name": "longitude",
-                "points": [
-                    [40.7128, -74.0060], 
-                    [34.0522, -118.2437],
-                    [41.8781, -87.6298]
-                ],
-                "tolerance": 0.5
-            }
-        }
-    ]
+  "nc_key": "s3://climate-data/global_temps.nc",
+  "variable_name": "temperature",
+  "parquet_key": "s3://results/urban_temps.parquet",
+  "filters": [
+    {
+      "kind": "range",
+      "params": {
+        "dimension_name": "time",
+        "min_value": 20200101.0,
+        "max_value": 20231231.0
+      }
+    },
+    {
+      "kind": "2d_point",
+      "params": {
+        "lat_dimension_name": "latitude",
+        "lon_dimension_name": "longitude",
+        "points": [
+          [40.7128, -74.006],
+          [34.0522, -118.2437],
+          [41.8781, -87.6298]
+        ],
+        "tolerance": 0.5
+      }
+    }
+  ]
 }
 ```
 
 ### Ocean Data Processing
+
 ```json
 {
-    "nc_key": "s3://ocean-data/sst_2023.nc",
-    "variable_name": "sea_surface_temperature", 
-    "parquet_key": "atlantic_sst.parquet",
-    "filters": [
-        {
-            "kind": "range",
-            "params": {
-                "dimension_name": "longitude",
-                "min_value": -80.0,
-                "max_value": -10.0
-            }
-        },
-        {
-            "kind": "range", 
-            "params": {
-                "dimension_name": "latitude",
-                "min_value": 0.0,
-                "max_value": 70.0
-            }
-        },
-        {
-            "kind": "list",
-            "params": {
-                "dimension_name": "depth",
-                "values": [0.0, 5.0, 10.0]
-            }
-        }
-    ]
+  "nc_key": "s3://ocean-data/sst_2023.nc",
+  "variable_name": "sea_surface_temperature",
+  "parquet_key": "atlantic_sst.parquet",
+  "filters": [
+    {
+      "kind": "range",
+      "params": {
+        "dimension_name": "longitude",
+        "min_value": -80.0,
+        "max_value": -10.0
+      }
+    },
+    {
+      "kind": "range",
+      "params": {
+        "dimension_name": "latitude",
+        "min_value": 0.0,
+        "max_value": 70.0
+      }
+    },
+    {
+      "kind": "list",
+      "params": {
+        "dimension_name": "depth",
+        "values": [0.0, 5.0, 10.0]
+      }
+    }
+  ]
 }
 ```
 
@@ -414,8 +545,9 @@ cargo test test_end_to_end_s3_pipeline -- --ignored
 nc2parquet supports multiple configuration sources with clear precedence:
 
 **Priority (highest to lowest):**
+
 1. CLI arguments
-2. Environment variables  
+2. Environment variables
 3. Configuration files
 
 ### Environment Variables
@@ -460,17 +592,20 @@ Transform DataFrames after extraction with built-in processors:
 ### Available Processors
 
 1. **Column Renaming**
+
    ```bash
    --rename "old_name:new_name,temperature:temp_k"
    ```
 
-2. **Unit Conversion**  
+2. **Unit Conversion**
+
    ```bash
    --unit-convert "temperature:kelvin:celsius"
    --kelvin-to-celsius temperature  # Shortcut for Kelvin→Celsius
    ```
 
 3. **Formula Application**
+
    ```bash
    --formula "temp_f:temp_c * 1.8 + 32"
    --formula "heat_index:temp + humidity * 0.1"
@@ -483,40 +618,40 @@ Transform DataFrames after extraction with built-in processors:
 
 ```json
 {
-    "nc_key": "weather.nc",
-    "variable_name": "temperature",
-    "parquet_key": "processed.parquet",
-    "postprocessing": {
-        "name": "Weather Data Pipeline",
-        "processors": [
-            {
-                "type": "RenameColumns",
-                "mappings": {
-                    "temperature": "temp_k",
-                    "lat": "latitude",
-                    "lon": "longitude"
-                }
-            },
-            {
-                "type": "UnitConvert",
-                "column": "temp_k",
-                "from_unit": "kelvin",
-                "to_unit": "celsius"
-            },
-            {
-                "type": "ApplyFormula",
-                "target_column": "temp_fahrenheit",
-                "formula": "temp_k * 1.8 - 459.67",
-                "source_columns": ["temp_k"]
-            },
-            {
-                "type": "DatetimeConvert",
-                "column": "time",
-                "base": "2000-01-01T00:00:00Z",
-                "unit": "hours"
-            }
-        ]
-    }
+  "nc_key": "weather.nc",
+  "variable_name": "temperature",
+  "parquet_key": "processed.parquet",
+  "postprocessing": {
+    "name": "Weather Data Pipeline",
+    "processors": [
+      {
+        "type": "RenameColumns",
+        "mappings": {
+          "temperature": "temp_k",
+          "lat": "latitude",
+          "lon": "longitude"
+        }
+      },
+      {
+        "type": "UnitConvert",
+        "column": "temp_k",
+        "from_unit": "kelvin",
+        "to_unit": "celsius"
+      },
+      {
+        "type": "ApplyFormula",
+        "target_column": "temp_fahrenheit",
+        "formula": "temp_k * 1.8 - 459.67",
+        "source_columns": ["temp_k"]
+      },
+      {
+        "type": "DatetimeConvert",
+        "column": "time",
+        "base": "2000-01-01T00:00:00Z",
+        "unit": "hours"
+      }
+    ]
+  }
 }
 ```
 
@@ -538,7 +673,7 @@ nc2parquet convert weather.nc result.parquet \
 nc2parquet uses a modular architecture:
 
 - **Storage Layer**: Unified interface for local and S3 operations
-- **Filter System**: Composable filters with intersection logic  
+- **Filter System**: Composable filters with intersection logic
 - **Processing Pipeline**: Efficient async processing with minimal memory usage
 - **Configuration**: Type-safe JSON configuration with validation
 

@@ -1,5 +1,5 @@
 //! # CLI Module
-//! 
+//!
 //! This module provides the command-line interface for nc2parquet, including:
 //! - Argument parsing with clap
 //! - Configuration file loading (JSON/YAML)
@@ -9,19 +9,19 @@
 //! - Progress reporting and logging
 //! - Filter DSL parsing for command line and environment variables
 
+use crate::input::{FilterConfig, JobConfig};
 use clap::{Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::env;
-use crate::input::{JobConfig, FilterConfig};
+use std::path::PathBuf;
 
 /// High-performance NetCDF to Parquet converter with cloud storage support
 #[derive(Parser, Debug)]
 #[command(name = "nc2parquet")]
 #[command(about = "Convert NetCDF files to Parquet format with advanced filtering")]
 #[command(version)]
-#[command(author = "Rogerio Malves <rjmalves@users.noreply.github.com>")]
+#[command(author = "Rogerio Alves <rjmalves@users.noreply.github.com>")]
 #[command(long_about = "
 nc2parquet is a high-performance command-line tool for converting NetCDF files to Parquet format.
 It supports advanced filtering capabilities, cloud storage (S3), and provides comprehensive 
@@ -64,19 +64,19 @@ pub struct Cli {
     /// Enable verbose logging
     #[arg(short, long, global = true)]
     pub verbose: bool,
-    
+
     /// Quiet mode - suppress all output except errors
     #[arg(short, long, global = true, conflicts_with = "verbose")]
     pub quiet: bool,
-    
+
     /// Output format for structured data
     #[arg(long, global = true, value_enum, default_value_t = OutputFormat::Human)]
     pub output_format: OutputFormat,
-    
+
     /// Configuration file path (JSON or YAML)
     #[arg(short, long, global = true, env = "NC2PARQUET_CONFIG")]
     pub config: Option<PathBuf>,
-    
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -113,64 +113,64 @@ EXAMPLES:
         /// Input NetCDF file path (local or S3)
         #[arg(value_name = "INPUT", env = "NC2PARQUET_INPUT")]
         input: Option<String>,
-        
+
         /// Output Parquet file path (local or S3)
         #[arg(value_name = "OUTPUT", env = "NC2PARQUET_OUTPUT")]
         output: Option<String>,
-        
+
         /// NetCDF variable name to extract
         #[arg(short = 'n', long, env = "NC2PARQUET_VARIABLE")]
         variable: Option<String>,
-        
+
         /// Override input path from config
         #[arg(long, env = "NC2PARQUET_INPUT_OVERRIDE")]
         input_override: Option<String>,
-        
+
         /// Override output path from config
         #[arg(long, env = "NC2PARQUET_OUTPUT_OVERRIDE")]
         output_override: Option<String>,
-        
+
         /// Apply range filter: dimension:min:max
         #[arg(long = "range", value_parser = parse_range_filter)]
         range_filters: Vec<RangeFilterArg>,
-        
+
         /// Apply list filter: dimension:val1,val2,val3
         #[arg(long = "list", value_parser = parse_list_filter)]
         list_filters: Vec<ListFilterArg>,
-        
+
         /// Apply 2D point filter: lat_dim,lon_dim:lat,lon:tolerance
         #[arg(long = "point2d", value_parser = parse_point2d_filter)]
         point2d_filters: Vec<Point2DFilterArg>,
-        
+
         /// Apply 3D point filter: time_dim,lat_dim,lon_dim:time,lat,lon:tolerance
         #[arg(long = "point3d", value_parser = parse_point3d_filter)]
         point3d_filters: Vec<Point3DFilterArg>,
-        
+
         /// Force overwrite existing output files
         #[arg(long, env = "NC2PARQUET_FORCE")]
         force: bool,
-        
+
         /// Dry run - validate configuration without processing
         #[arg(long, env = "NC2PARQUET_DRY_RUN")]
         dry_run: bool,
-        
+
         /// Rename column: old_name:new_name (can be used multiple times)
         #[arg(long = "rename", value_parser = parse_rename_column)]
         rename_columns: Vec<RenameColumnArg>,
-        
+
         /// Convert column units: column:from_unit:to_unit
         #[arg(long = "unit-convert", value_parser = parse_unit_conversion)]
         unit_conversions: Vec<UnitConversionArg>,
-        
+
         /// Convert temperature from Kelvin to Celsius for given column
         #[arg(long = "kelvin-to-celsius")]
         kelvin_to_celsius: Vec<String>,
-        
+
         /// Apply mathematical formula: target_column:formula:source1,source2,...
         #[arg(long = "formula", value_parser = parse_formula)]
         formulas: Vec<FormulaArg>,
     },
-    
+
     /// Validate configuration file or arguments
     #[command(long_about = "
 Validate configuration files and command-line arguments without processing.
@@ -195,12 +195,12 @@ EXAMPLES:
     Validate {
         /// Configuration file to validate
         config_file: Option<PathBuf>,
-        
+
         /// Show detailed validation report
         #[arg(long)]
         detailed: bool,
     },
-    
+
     /// Show information about NetCDF file
     #[command(long_about = "
 Inspect NetCDF files and display structure information.
@@ -230,20 +230,20 @@ EXAMPLES:
     Info {
         /// NetCDF file path (local or S3)
         file: String,
-        
+
         /// Show detailed variable information
         #[arg(long)]
         detailed: bool,
-        
+
         /// Show only specific variable info
         #[arg(short = 'n', long)]
         variable: Option<String>,
-        
+
         /// Output format for file information
         #[arg(long, value_enum)]
         format: Option<OutputFormat>,
     },
-    
+
     /// Generate configuration templates
     #[command(long_about = "
 Generate configuration file templates for common use cases.
@@ -277,16 +277,16 @@ EXAMPLES:
         /// Template type to generate
         #[arg(value_enum)]
         template_type: TemplateType,
-        
+
         /// Output file path (default: stdout)
         #[arg(short, long)]
         output: Option<PathBuf>,
-        
+
         /// Configuration format
         #[arg(long, value_enum, default_value_t = ConfigFormat::Json)]
         format: ConfigFormat,
     },
-    
+
     /// Generate shell completions
     #[command(long_about = "
 Generate shell completion scripts for various shells.
@@ -323,7 +323,7 @@ EXAMPLES:
         /// Shell to generate completions for
         #[arg(value_enum)]
         shell: Shell,
-        
+
         /// Output file path (default: stdout)
         #[arg(short, long)]
         output: Option<PathBuf>,
@@ -428,7 +428,7 @@ pub struct FormulaArg {
 pub struct CliConfig {
     #[serde(flatten)]
     pub job: JobConfig,
-    
+
     /// CLI-specific options
     #[serde(default)]
     pub cli_options: CliOptions,
@@ -438,13 +438,13 @@ pub struct CliConfig {
 pub struct CliOptions {
     /// Default log level
     pub log_level: Option<String>,
-    
+
     /// Progress reporting settings
     pub progress: Option<ProgressConfig>,
-    
+
     /// Output formatting preferences
     pub output_format: Option<OutputFormat>,
-    
+
     /// Validation settings
     pub validation: Option<ValidationConfig>,
 }
@@ -453,10 +453,10 @@ pub struct CliOptions {
 pub struct ProgressConfig {
     /// Enable progress bars
     pub enabled: bool,
-    
+
     /// Progress update interval in seconds
     pub interval: Option<u64>,
-    
+
     /// Progress bar style
     pub style: Option<String>,
 }
@@ -465,10 +465,10 @@ pub struct ProgressConfig {
 pub struct ValidationConfig {
     /// Strict validation mode
     pub strict: bool,
-    
+
     /// Validate S3 paths
     pub check_s3_paths: bool,
-    
+
     /// Validate NetCDF file accessibility  
     pub check_file_access: bool,
 }
@@ -480,17 +480,19 @@ fn parse_range_filter(s: &str) -> Result<RangeFilterArg, String> {
     if parts.len() != 3 {
         return Err("Range filter must be in format 'dimension:min:max'".to_string());
     }
-    
+
     let dimension = parts[0].to_string();
-    let min_value = parts[1].parse::<f64>()
+    let min_value = parts[1]
+        .parse::<f64>()
         .map_err(|_| "Invalid minimum value in range filter")?;
-    let max_value = parts[2].parse::<f64>()
+    let max_value = parts[2]
+        .parse::<f64>()
         .map_err(|_| "Invalid maximum value in range filter")?;
-        
+
     if min_value >= max_value {
         return Err("Minimum value must be less than maximum value".to_string());
     }
-    
+
     Ok(RangeFilterArg {
         dimension,
         min_value,
@@ -505,23 +507,20 @@ fn parse_list_filter(s: &str) -> Result<ListFilterArg, String> {
     if parts.len() != 2 {
         return Err("List filter must be in format 'dimension:val1,val2,val3'".to_string());
     }
-    
+
     let dimension = parts[0].to_string();
     let values: Result<Vec<f64>, _> = parts[1]
         .split(',')
         .map(|v| v.trim().parse::<f64>())
         .collect();
-        
+
     let values = values.map_err(|_| "Invalid numeric values in list filter")?;
-    
+
     if values.is_empty() {
         return Err("List filter must contain at least one value".to_string());
     }
-    
-    Ok(ListFilterArg {
-        dimension,
-        values,
-    })
+
+    Ok(ListFilterArg { dimension, values })
 }
 
 /// Parse 2D point filter from command line argument
@@ -529,29 +528,37 @@ fn parse_list_filter(s: &str) -> Result<ListFilterArg, String> {
 fn parse_point2d_filter(s: &str) -> Result<Point2DFilterArg, String> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 3 {
-        return Err("2D point filter must be in format 'lat_dim,lon_dim:lat,lon:tolerance'".to_string());
+        return Err(
+            "2D point filter must be in format 'lat_dim,lon_dim:lat,lon:tolerance'".to_string(),
+        );
     }
-    
+
     let dimensions: Vec<&str> = parts[0].split(',').collect();
     if dimensions.len() != 2 {
         return Err("2D point filter dimensions must be 'lat_dim,lon_dim'".to_string());
     }
-    
+
     let coords: Vec<&str> = parts[1].split(',').collect();
     if coords.len() != 2 {
         return Err("2D point filter coordinates must be 'lat,lon'".to_string());
     }
-    
+
     let lat_dimension = dimensions[0].to_string();
     let lon_dimension = dimensions[1].to_string();
-    let lat = coords[0].parse::<f64>().map_err(|_| "Invalid latitude value")?;
-    let lon = coords[1].parse::<f64>().map_err(|_| "Invalid longitude value")?;
-    let tolerance = parts[2].parse::<f64>().map_err(|_| "Invalid tolerance value")?;
-    
+    let lat = coords[0]
+        .parse::<f64>()
+        .map_err(|_| "Invalid latitude value")?;
+    let lon = coords[1]
+        .parse::<f64>()
+        .map_err(|_| "Invalid longitude value")?;
+    let tolerance = parts[2]
+        .parse::<f64>()
+        .map_err(|_| "Invalid tolerance value")?;
+
     if tolerance <= 0.0 {
         return Err("Tolerance must be positive".to_string());
     }
-    
+
     Ok(Point2DFilterArg {
         lat_dimension,
         lon_dimension,
@@ -566,31 +573,40 @@ fn parse_point2d_filter(s: &str) -> Result<Point2DFilterArg, String> {
 fn parse_point3d_filter(s: &str) -> Result<Point3DFilterArg, String> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 3 {
-        return Err("3D point filter must be in format 'time_dim,lat_dim,lon_dim:time,lat,lon:tolerance'".to_string());
+        return Err(
+            "3D point filter must be in format 'time_dim,lat_dim,lon_dim:time,lat,lon:tolerance'"
+                .to_string(),
+        );
     }
-    
+
     let dimensions: Vec<&str> = parts[0].split(',').collect();
     if dimensions.len() != 3 {
         return Err("3D point filter dimensions must be 'time_dim,lat_dim,lon_dim'".to_string());
     }
-    
+
     let coords: Vec<&str> = parts[1].split(',').collect();
     if coords.len() != 3 {
         return Err("3D point filter coordinates must be 'time,lat,lon'".to_string());
     }
-    
+
     let time_dimension = dimensions[0].to_string();
     let lat_dimension = dimensions[1].to_string();
     let lon_dimension = dimensions[2].to_string();
     let time = coords[0].parse::<f64>().map_err(|_| "Invalid time value")?;
-    let lat = coords[1].parse::<f64>().map_err(|_| "Invalid latitude value")?;
-    let lon = coords[2].parse::<f64>().map_err(|_| "Invalid longitude value")?;
-    let tolerance = parts[2].parse::<f64>().map_err(|_| "Invalid tolerance value")?;
-    
+    let lat = coords[1]
+        .parse::<f64>()
+        .map_err(|_| "Invalid latitude value")?;
+    let lon = coords[2]
+        .parse::<f64>()
+        .map_err(|_| "Invalid longitude value")?;
+    let tolerance = parts[2]
+        .parse::<f64>()
+        .map_err(|_| "Invalid tolerance value")?;
+
     if tolerance <= 0.0 {
         return Err("Tolerance must be positive".to_string());
     }
-    
+
     Ok(Point3DFilterArg {
         time_dimension,
         lat_dimension,
@@ -608,14 +624,14 @@ fn parse_rename_column(s: &str) -> Result<RenameColumnArg, String> {
     if parts.len() != 2 {
         return Err("Column rename must be in format 'old_name:new_name'".to_string());
     }
-    
+
     let old_name = parts[0].trim().to_string();
     let new_name = parts[1].trim().to_string();
-    
+
     if old_name.is_empty() || new_name.is_empty() {
         return Err("Column names cannot be empty".to_string());
     }
-    
+
     Ok(RenameColumnArg { old_name, new_name })
 }
 
@@ -625,25 +641,31 @@ fn parse_unit_conversion(s: &str) -> Result<UnitConversionArg, String> {
     if parts.len() != 3 {
         return Err("Unit conversion must be in format 'column:from_unit:to_unit'".to_string());
     }
-    
+
     let column = parts[0].trim().to_string();
     let from_unit = parts[1].trim().to_string();
     let to_unit = parts[2].trim().to_string();
-    
+
     if column.is_empty() || from_unit.is_empty() || to_unit.is_empty() {
         return Err("Column and unit names cannot be empty".to_string());
     }
-    
-    Ok(UnitConversionArg { column, from_unit, to_unit })
+
+    Ok(UnitConversionArg {
+        column,
+        from_unit,
+        to_unit,
+    })
 }
 
 /// Parse formula argument: target_column:formula:source1,source2,...
 fn parse_formula(s: &str) -> Result<FormulaArg, String> {
     let parts: Vec<&str> = s.splitn(3, ':').collect();
     if parts.len() != 3 {
-        return Err("Formula must be in format 'target_column:formula:source1,source2,...'".to_string());
+        return Err(
+            "Formula must be in format 'target_column:formula:source1,source2,...'".to_string(),
+        );
     }
-    
+
     let target_column = parts[0].trim().to_string();
     let formula = parts[1].trim().to_string();
     let source_columns: Vec<String> = parts[2]
@@ -651,12 +673,16 @@ fn parse_formula(s: &str) -> Result<FormulaArg, String> {
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
-    
+
     if target_column.is_empty() || formula.is_empty() || source_columns.is_empty() {
         return Err("Target column, formula, and source columns cannot be empty".to_string());
     }
-    
-    Ok(FormulaArg { target_column, formula, source_columns })
+
+    Ok(FormulaArg {
+        target_column,
+        formula,
+        source_columns,
+    })
 }
 
 impl From<RangeFilterArg> for FilterConfig {
@@ -666,7 +692,7 @@ impl From<RangeFilterArg> for FilterConfig {
                 dimension_name: arg.dimension,
                 min_value: arg.min_value,
                 max_value: arg.max_value,
-            }
+            },
         }
     }
 }
@@ -677,7 +703,7 @@ impl From<ListFilterArg> for FilterConfig {
             params: crate::input::ListParams {
                 dimension_name: arg.dimension,
                 values: arg.values,
-            }
+            },
         }
     }
 }
@@ -690,7 +716,7 @@ impl From<Point2DFilterArg> for FilterConfig {
                 lon_dimension_name: arg.lon_dimension,
                 points: vec![(arg.lat, arg.lon)],
                 tolerance: arg.tolerance,
-            }
+            },
         }
     }
 }
@@ -705,7 +731,7 @@ impl From<Point3DFilterArg> for FilterConfig {
                 steps: vec![arg.time],
                 points: vec![(arg.lat, arg.lon)],
                 tolerance: arg.tolerance,
-            }
+            },
         }
     }
 }
@@ -736,83 +762,130 @@ impl Default for ValidationConfig {
 /// - NC2PARQUET_LIST_FILTERS: "dim1:val1,val2,val3;dim2:val4,val5"  
 /// - NC2PARQUET_POINT2D_FILTERS: "lat,lon:30.0,-120.0:0.1;lat2,lon2:40.0,-100.0:0.2"
 /// - NC2PARQUET_POINT3D_FILTERS: "time,lat,lon:0.0,30.0,-120.0:0.1"
-pub fn parse_filters_from_env() -> Result<(Vec<RangeFilterArg>, Vec<ListFilterArg>, Vec<Point2DFilterArg>, Vec<Point3DFilterArg>), String> {
+pub fn parse_filters_from_env() -> Result<
+    (
+        Vec<RangeFilterArg>,
+        Vec<ListFilterArg>,
+        Vec<Point2DFilterArg>,
+        Vec<Point3DFilterArg>,
+    ),
+    String,
+> {
     let mut range_filters = Vec::new();
     let mut list_filters = Vec::new();
     let mut point2d_filters = Vec::new();
     let mut point3d_filters = Vec::new();
-    
+
     // Parse range filters from environment
     if let Ok(range_env) = env::var("NC2PARQUET_RANGE_FILTERS") {
         if !range_env.trim().is_empty() {
             for filter_str in range_env.split(',') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
-                    range_filters.push(parse_range_filter(filter_str)
-                        .map_err(|e| format!("Invalid range filter in NC2PARQUET_RANGE_FILTERS: {}", e))?);
+                    range_filters.push(parse_range_filter(filter_str).map_err(|e| {
+                        format!("Invalid range filter in NC2PARQUET_RANGE_FILTERS: {}", e)
+                    })?);
                 }
             }
         }
     }
-    
-    // Parse list filters from environment  
+
+    // Parse list filters from environment
     if let Ok(list_env) = env::var("NC2PARQUET_LIST_FILTERS") {
         if !list_env.trim().is_empty() {
             for filter_str in list_env.split(';') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
-                    list_filters.push(parse_list_filter(filter_str)
-                        .map_err(|e| format!("Invalid list filter in NC2PARQUET_LIST_FILTERS: {}", e))?);
+                    list_filters.push(parse_list_filter(filter_str).map_err(|e| {
+                        format!("Invalid list filter in NC2PARQUET_LIST_FILTERS: {}", e)
+                    })?);
                 }
             }
         }
     }
-    
+
     // Parse 2D point filters from environment
     if let Ok(point2d_env) = env::var("NC2PARQUET_POINT2D_FILTERS") {
         if !point2d_env.trim().is_empty() {
             for filter_str in point2d_env.split(';') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
-                    point2d_filters.push(parse_point2d_filter(filter_str)
-                        .map_err(|e| format!("Invalid 2D point filter in NC2PARQUET_POINT2D_FILTERS: {}", e))?);
+                    point2d_filters.push(parse_point2d_filter(filter_str).map_err(|e| {
+                        format!(
+                            "Invalid 2D point filter in NC2PARQUET_POINT2D_FILTERS: {}",
+                            e
+                        )
+                    })?);
                 }
             }
         }
     }
-    
+
     // Parse 3D point filters from environment
     if let Ok(point3d_env) = env::var("NC2PARQUET_POINT3D_FILTERS") {
         if !point3d_env.trim().is_empty() {
             for filter_str in point3d_env.split(';') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
-                    point3d_filters.push(parse_point3d_filter(filter_str)
-                        .map_err(|e| format!("Invalid 3D point filter in NC2PARQUET_POINT3D_FILTERS: {}", e))?);
+                    point3d_filters.push(parse_point3d_filter(filter_str).map_err(|e| {
+                        format!(
+                            "Invalid 3D point filter in NC2PARQUET_POINT3D_FILTERS: {}",
+                            e
+                        )
+                    })?);
                 }
             }
         }
     }
-    
-    Ok((range_filters, list_filters, point2d_filters, point3d_filters))
+
+    Ok((
+        range_filters,
+        list_filters,
+        point2d_filters,
+        point3d_filters,
+    ))
 }
 
 /// Merge CLI filters with environment variable filters
 /// Priority: CLI arguments > Environment variables
 pub fn merge_filters(
-    cli_range: Vec<RangeFilterArg>, 
+    cli_range: Vec<RangeFilterArg>,
     cli_list: Vec<ListFilterArg>,
     cli_point2d: Vec<Point2DFilterArg>,
-    cli_point3d: Vec<Point3DFilterArg>
-) -> Result<(Vec<RangeFilterArg>, Vec<ListFilterArg>, Vec<Point2DFilterArg>, Vec<Point3DFilterArg>), String> {
+    cli_point3d: Vec<Point3DFilterArg>,
+) -> Result<
+    (
+        Vec<RangeFilterArg>,
+        Vec<ListFilterArg>,
+        Vec<Point2DFilterArg>,
+        Vec<Point3DFilterArg>,
+    ),
+    String,
+> {
     let (env_range, env_list, env_point2d, env_point3d) = parse_filters_from_env()?;
-    
+
     // CLI arguments have priority, but we append env filters if CLI is empty
-    let merged_range = if cli_range.is_empty() { env_range } else { cli_range };
-    let merged_list = if cli_list.is_empty() { env_list } else { cli_list };
-    let merged_point2d = if cli_point2d.is_empty() { env_point2d } else { cli_point2d };
-    let merged_point3d = if cli_point3d.is_empty() { env_point3d } else { cli_point3d };
-    
+    let merged_range = if cli_range.is_empty() {
+        env_range
+    } else {
+        cli_range
+    };
+    let merged_list = if cli_list.is_empty() {
+        env_list
+    } else {
+        cli_list
+    };
+    let merged_point2d = if cli_point2d.is_empty() {
+        env_point2d
+    } else {
+        cli_point2d
+    };
+    let merged_point3d = if cli_point3d.is_empty() {
+        env_point3d
+    } else {
+        cli_point3d
+    };
+
     Ok((merged_range, merged_list, merged_point2d, merged_point3d))
 }
 
@@ -820,40 +893,40 @@ pub fn merge_filters(
 mod tests {
     use super::*;
     use std::sync::Mutex;
-    
+
     // Global mutex to ensure environment variable tests run sequentially
     static ENV_TEST_MUTEX: Mutex<()> = Mutex::new(());
-    
+
     #[test]
     fn test_parse_range_filter() {
         let result = parse_range_filter("latitude:30.0:60.0").unwrap();
         assert_eq!(result.dimension, "latitude");
         assert_eq!(result.min_value, 30.0);
         assert_eq!(result.max_value, 60.0);
-        
+
         // Test invalid formats
         assert!(parse_range_filter("latitude:30.0").is_err());
         assert!(parse_range_filter("latitude:30.0:60.0:extra").is_err());
         assert!(parse_range_filter("latitude:invalid:60.0").is_err());
         assert!(parse_range_filter("latitude:60.0:30.0").is_err()); // min > max
     }
-    
+
     #[test]
     fn test_parse_list_filter() {
         let result = parse_list_filter("pressure:850.0,500.0,200.0").unwrap();
         assert_eq!(result.dimension, "pressure");
         assert_eq!(result.values, vec![850.0, 500.0, 200.0]);
-        
+
         // Test single value
         let result = parse_list_filter("time:0.0").unwrap();
         assert_eq!(result.values, vec![0.0]);
-        
+
         // Test invalid formats
         assert!(parse_list_filter("pressure:850.0,invalid,200.0").is_err());
         assert!(parse_list_filter("pressure:").is_err());
         assert!(parse_list_filter("pressure").is_err());
     }
-    
+
     #[test]
     fn test_filter_conversion() {
         let range_arg = RangeFilterArg {
@@ -861,7 +934,7 @@ mod tests {
             min_value: 10.0,
             max_value: 50.0,
         };
-        
+
         let filter_config: FilterConfig = range_arg.into();
         if let FilterConfig::Range { params } = filter_config {
             assert_eq!(params.dimension_name, "lat");
@@ -871,7 +944,7 @@ mod tests {
             panic!("Expected Range filter config");
         }
     }
-    
+
     #[test]
     fn test_parse_point2d_filter() {
         let result = parse_point2d_filter("latitude,longitude:30.5,-120.2:0.1").unwrap();
@@ -880,7 +953,7 @@ mod tests {
         assert_eq!(result.lat, 30.5);
         assert_eq!(result.lon, -120.2);
         assert_eq!(result.tolerance, 0.1);
-        
+
         // Test invalid formats
         assert!(parse_point2d_filter("latitude,longitude:30.5:-120.2").is_err()); // missing tolerance
         assert!(parse_point2d_filter("latitude:30.5,-120.2:0.1").is_err()); // missing longitude dimension
@@ -888,7 +961,7 @@ mod tests {
         assert!(parse_point2d_filter("latitude,longitude:30.5,-120.2:0.0").is_err()); // zero tolerance
         assert!(parse_point2d_filter("latitude,longitude:30.5,-120.2:-0.1").is_err()); // negative tolerance
     }
-    
+
     #[test]
     fn test_parse_point3d_filter() {
         let result = parse_point3d_filter("time,latitude,longitude:0.0,30.5,-120.2:0.1").unwrap();
@@ -899,14 +972,14 @@ mod tests {
         assert_eq!(result.lat, 30.5);
         assert_eq!(result.lon, -120.2);
         assert_eq!(result.tolerance, 0.1);
-        
+
         // Test invalid formats
         assert!(parse_point3d_filter("time,latitude:0.0,30.5,-120.2:0.1").is_err()); // missing lon dimension
         assert!(parse_point3d_filter("time,latitude,longitude:0.0,30.5:0.1").is_err()); // missing lon coordinate
         assert!(parse_point3d_filter("time,latitude,longitude:invalid,30.5,-120.2:0.1").is_err()); // invalid time
         assert!(parse_point3d_filter("time,latitude,longitude:0.0,30.5,-120.2:0.0").is_err()); // zero tolerance
     }
-    
+
     #[test]
     fn test_point_filter_conversion() {
         // Test 2D point filter conversion
@@ -917,7 +990,7 @@ mod tests {
             lon: -120.0,
             tolerance: 1.0,
         };
-        
+
         let filter_config: FilterConfig = point2d_arg.into();
         if let FilterConfig::Point2D { params } = filter_config {
             assert_eq!(params.lat_dimension_name, "lat");
@@ -927,7 +1000,7 @@ mod tests {
         } else {
             panic!("Expected Point2D filter config");
         }
-        
+
         // Test 3D point filter conversion
         let point3d_arg = Point3DFilterArg {
             time_dimension: "time".to_string(),
@@ -938,7 +1011,7 @@ mod tests {
             lon: -120.0,
             tolerance: 1.0,
         };
-        
+
         let filter_config: FilterConfig = point3d_arg.into();
         if let FilterConfig::Point3D { params } = filter_config {
             assert_eq!(params.time_dimension_name, "time");
@@ -951,48 +1024,54 @@ mod tests {
             panic!("Expected Point3D filter config");
         }
     }
-    
+
     #[test]
     fn test_environment_variable_filter_parsing() {
         // Acquire mutex to ensure exclusive access to environment variables
         let _guard = ENV_TEST_MUTEX.lock().unwrap();
-        
+
         use std::env;
-        
+
         // Save existing environment state
         let original_range = env::var("NC2PARQUET_RANGE_FILTERS").ok();
         let original_list = env::var("NC2PARQUET_LIST_FILTERS").ok();
         let original_point2d = env::var("NC2PARQUET_POINT2D_FILTERS").ok();
         let original_point3d = env::var("NC2PARQUET_POINT3D_FILTERS").ok();
-        
+
         // Test with environment variables set
         unsafe {
             env::set_var("NC2PARQUET_RANGE_FILTERS", "lat:30:60,lon:-180:180");
-            env::set_var("NC2PARQUET_LIST_FILTERS", "pressure:1000,850,500;level:1,2,3");
+            env::set_var(
+                "NC2PARQUET_LIST_FILTERS",
+                "pressure:1000,850,500;level:1,2,3",
+            );
             env::set_var("NC2PARQUET_POINT2D_FILTERS", "lat,lon:30.0,-120.0:0.1");
-            env::set_var("NC2PARQUET_POINT3D_FILTERS", "time,lat,lon:0.0,30.0,-120.0:0.1");
+            env::set_var(
+                "NC2PARQUET_POINT3D_FILTERS",
+                "time,lat,lon:0.0,30.0,-120.0:0.1",
+            );
         }
-        
+
         let result = parse_filters_from_env().unwrap();
         assert_eq!(result.0.len(), 2); // 2 range filters
         assert_eq!(result.1.len(), 2); // 2 list filters  
         assert_eq!(result.2.len(), 1); // 1 point2d filter
         assert_eq!(result.3.len(), 1); // 1 point3d filter
-        
+
         // Verify filter content
         assert_eq!(result.0[0].dimension, "lat");
         assert_eq!(result.0[0].min_value, 30.0);
         assert_eq!(result.0[0].max_value, 60.0);
-        
+
         assert_eq!(result.1[0].dimension, "pressure");
         assert_eq!(result.1[0].values, vec![1000.0, 850.0, 500.0]);
-        
+
         assert_eq!(result.2[0].lat_dimension, "lat");
         assert_eq!(result.2[0].lon_dimension, "lon");
         assert_eq!(result.2[0].lat, 30.0);
         assert_eq!(result.2[0].lon, -120.0);
         assert_eq!(result.2[0].tolerance, 0.1);
-        
+
         // Cleanup and restore original state
         unsafe {
             // Remove test variables
@@ -1000,7 +1079,7 @@ mod tests {
             env::remove_var("NC2PARQUET_LIST_FILTERS");
             env::remove_var("NC2PARQUET_POINT2D_FILTERS");
             env::remove_var("NC2PARQUET_POINT3D_FILTERS");
-            
+
             // Restore original variables if they existed
             if let Some(ref val) = original_range {
                 env::set_var("NC2PARQUET_RANGE_FILTERS", val);
@@ -1015,7 +1094,7 @@ mod tests {
                 env::set_var("NC2PARQUET_POINT3D_FILTERS", val);
             }
         }
-        
+
         // Test with empty environment (temporarily clear everything)
         unsafe {
             env::remove_var("NC2PARQUET_RANGE_FILTERS");
@@ -1023,13 +1102,13 @@ mod tests {
             env::remove_var("NC2PARQUET_POINT2D_FILTERS");
             env::remove_var("NC2PARQUET_POINT3D_FILTERS");
         }
-        
+
         let result = parse_filters_from_env().unwrap();
         assert!(result.0.is_empty()); // range filters
         assert!(result.1.is_empty()); // list filters
         assert!(result.2.is_empty()); // point2d filters
         assert!(result.3.is_empty()); // point3d filters
-        
+
         // Final restore of original state
         unsafe {
             if let Some(ref val) = original_range {
@@ -1046,20 +1125,20 @@ mod tests {
             }
         }
     }
-    
+
     #[test]
     fn test_filter_merging_priority() {
         // Acquire mutex to ensure exclusive access to environment variables
         let _guard = ENV_TEST_MUTEX.lock().unwrap();
-        
+
         use std::env;
-        
+
         // Save existing environment state
         let original_range = env::var("NC2PARQUET_RANGE_FILTERS").ok();
         let original_list = env::var("NC2PARQUET_LIST_FILTERS").ok();
         let original_point2d = env::var("NC2PARQUET_POINT2D_FILTERS").ok();
         let original_point3d = env::var("NC2PARQUET_POINT3D_FILTERS").ok();
-        
+
         // Clean up any existing environment variables first
         unsafe {
             env::remove_var("NC2PARQUET_RANGE_FILTERS");
@@ -1067,42 +1146,46 @@ mod tests {
             env::remove_var("NC2PARQUET_POINT2D_FILTERS");
             env::remove_var("NC2PARQUET_POINT3D_FILTERS");
         }
-        
+
         // Set environment variables
         unsafe {
             env::set_var("NC2PARQUET_RANGE_FILTERS", "lat:0:90");
             env::set_var("NC2PARQUET_LIST_FILTERS", "pressure:1000,850");
         }
-        
+
         // Test CLI priority over environment
-        let cli_range = vec![RangeFilterArg { 
-            dimension: "lon".to_string(), 
-            min_value: -180.0, 
-            max_value: 180.0 
+        let cli_range = vec![RangeFilterArg {
+            dimension: "lon".to_string(),
+            min_value: -180.0,
+            max_value: 180.0,
         }];
         let cli_list = vec![];
         let cli_point2d = vec![];
         let cli_point3d = vec![];
-        
+
         let (merged_range, merged_list, _, _) = merge_filters(
-            cli_range.clone(), cli_list.clone(), cli_point2d, cli_point3d
-        ).unwrap();
-        
+            cli_range.clone(),
+            cli_list.clone(),
+            cli_point2d,
+            cli_point3d,
+        )
+        .unwrap();
+
         // CLI range filter should be used (not environment)
         assert_eq!(merged_range.len(), 1);
         assert_eq!(merged_range[0].dimension, "lon");
-        
+
         // Environment list filter should be used (CLI is empty)
         assert_eq!(merged_list.len(), 1);
         assert_eq!(merged_list[0].dimension, "pressure");
-        
+
         // Cleanup and restore original state
         unsafe {
             env::remove_var("NC2PARQUET_RANGE_FILTERS");
             env::remove_var("NC2PARQUET_LIST_FILTERS");
             env::remove_var("NC2PARQUET_POINT2D_FILTERS");
             env::remove_var("NC2PARQUET_POINT3D_FILTERS");
-            
+
             // Restore original variables if they existed
             if let Some(ref val) = original_range {
                 env::set_var("NC2PARQUET_RANGE_FILTERS", val);
