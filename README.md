@@ -4,14 +4,12 @@ A high-performance Rust library and CLI tool for converting NetCDF files to Parq
 
 ## Features
 
-🚀 **High Performance**: Built in Rust with efficient processing of large NetCDF datasets  
-🔄 **Advanced Filtering**: Multiple filter types with intersection logic for precise data extraction  
-☁️ **Cloud Storage**: Native Amazon S3 support for input and output files with async operations  
-📊 **Multiple Filter Types**: Range, list, 2D point, and 3D point filters with spatial/temporal support  
-🔧 **Multi-Source Configuration**: CLI arguments, environment variables, and JSON/YAML configuration files  
-🛠️ **Post-Processing Framework**: Built-in DataFrame transformations including column renaming, unit conversion, and formula application  
-🖥️ **Professional CLI**: Comprehensive command-line interface with progress indicators, logging, and shell completions  
-🧪 **Well Tested**: Comprehensive test suite with 80+ tests covering all features
+**High Performance**: Built in Rust with efficient processing of large NetCDF datasets  
+**Advanced Filtering**: Multiple filter types with intersection logic for precise data extraction  
+**Cloud Storage**: Native Amazon S3 support for input and output files with async operations  
+**Multi-Source Configuration**: CLI arguments, environment variables, and JSON/YAML configuration files  
+**Post-Processing Framework**: Built-in DataFrame transformations including column renaming, unit conversion, and formula application  
+**Professional CLI**: Comprehensive command-line interface with progress indicators, logging, and shell completions
 
 ## Installation
 
@@ -633,7 +631,7 @@ Transform DataFrames after extraction with built-in processors:
     "name": "Weather Data Pipeline",
     "processors": [
       {
-        "type": "RenameColumns",
+        "type": "rename_columns",
         "mappings": {
           "temperature": "temp_k",
           "lat": "latitude",
@@ -641,19 +639,19 @@ Transform DataFrames after extraction with built-in processors:
         }
       },
       {
-        "type": "UnitConvert",
+        "type": "unit_convert",
         "column": "temp_k",
         "from_unit": "kelvin",
         "to_unit": "celsius"
       },
       {
-        "type": "ApplyFormula",
+        "type": "apply_formula",
         "target_column": "temp_fahrenheit",
         "formula": "temp_k * 1.8 - 459.67",
         "source_columns": ["temp_k"]
       },
       {
-        "type": "DatetimeConvert",
+        "type": "datetime_convert",
         "column": "time",
         "base": "2000-01-01T00:00:00Z",
         "unit": "hours"
