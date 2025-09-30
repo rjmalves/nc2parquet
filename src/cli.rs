@@ -82,6 +82,7 @@ pub struct Cli {
 }
 
 #[derive(Subcommand, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum Commands {
     /// Convert NetCDF files to Parquet format
     #[command(long_about = "
@@ -132,19 +133,19 @@ EXAMPLES:
 
         /// Apply range filter: dimension:min:max
         #[arg(long = "range", value_parser = parse_range_filter)]
-        range_filters: Box<Vec<RangeFilterArg>>,
+        range_filters: Vec<RangeFilterArg>,
 
         /// Apply list filter: dimension:val1,val2,val3
         #[arg(long = "list", value_parser = parse_list_filter)]
-        list_filters: Box<Vec<ListFilterArg>>,
+        list_filters: Vec<ListFilterArg>,
 
         /// Apply 2D point filter: lat_dim,lon_dim:lat,lon:tolerance
         #[arg(long = "point2d", value_parser = parse_point2d_filter)]
-        point2d_filters: Box<Vec<Point2DFilterArg>>,
+        point2d_filters: Vec<Point2DFilterArg>,
 
         /// Apply 3D point filter: time_dim,lat_dim,lon_dim:time,lat,lon:tolerance
         #[arg(long = "point3d", value_parser = parse_point3d_filter)]
-        point3d_filters: Box<Vec<Point3DFilterArg>>,
+        point3d_filters: Vec<Point3DFilterArg>,
 
         /// Force overwrite existing output files
         #[arg(long, env = "NC2PARQUET_FORCE")]
@@ -156,11 +157,11 @@ EXAMPLES:
 
         /// Rename column: old_name:new_name (can be used multiple times)
         #[arg(long = "rename", value_parser = parse_rename_column)]
-        rename_columns: Box<Vec<RenameColumnArg>>,
+        rename_columns: Vec<RenameColumnArg>,
 
         /// Convert column units: column:from_unit:to_unit
         #[arg(long = "unit-convert", value_parser = parse_unit_conversion)]
-        unit_conversions: Box<Vec<UnitConversionArg>>,
+        unit_conversions: Vec<UnitConversionArg>,
 
         /// Convert temperature from Kelvin to Celsius for given column
         #[arg(long = "kelvin-to-celsius")]
@@ -168,7 +169,7 @@ EXAMPLES:
 
         /// Apply mathematical formula: target_column:formula:source1,source2,...
         #[arg(long = "formula", value_parser = parse_formula)]
-        formulas: Box<Vec<FormulaArg>>,
+        formulas: Vec<FormulaArg>,
     },
 
     /// Validate configuration file or arguments

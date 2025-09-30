@@ -119,10 +119,10 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
             merged_point2d_filters,
             merged_point3d_filters,
         ) = merge_filters(
-            (**range_filters).clone(),
-            (**list_filters).clone(),
-            (**point2d_filters).clone(),
-            (**point3d_filters).clone(),
+            range_filters.clone(),
+            list_filters.clone(),
+            point2d_filters.clone(),
+            point3d_filters.clone(),
         )
         .map_err(|e| anyhow::anyhow!("Filter parsing error: {}", e))?;
 
