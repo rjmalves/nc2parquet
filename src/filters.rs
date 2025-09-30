@@ -18,7 +18,12 @@
 type PairResult<'a> = Option<(&'a String, &'a String, &'a Vec<(usize, usize)>)>;
 
 /// Type alias for coordinate triplet result tuple  
-type TripletResult<'a> = Option<(&'a String, &'a String, &'a String, &'a Vec<(usize, usize, usize)>)>;
+type TripletResult<'a> = Option<(
+    &'a String,
+    &'a String,
+    &'a String,
+    &'a Vec<(usize, usize, usize)>,
+)>;
 
 use serde::Deserialize;
 

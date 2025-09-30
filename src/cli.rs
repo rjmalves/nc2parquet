@@ -781,61 +781,65 @@ pub fn parse_filters_from_env() -> FilterResult {
 
     // Parse range filters from environment
     if let Ok(range_env) = env::var("NC2PARQUET_RANGE_FILTERS")
-        && !range_env.trim().is_empty() {
-            for filter_str in range_env.split(',') {
-                let filter_str = filter_str.trim();
-                if !filter_str.is_empty() {
-                    range_filters.push(parse_range_filter(filter_str).map_err(|e| {
-                        format!("Invalid range filter in NC2PARQUET_RANGE_FILTERS: {}", e)
-                    })?);
-                }
+        && !range_env.trim().is_empty()
+    {
+        for filter_str in range_env.split(',') {
+            let filter_str = filter_str.trim();
+            if !filter_str.is_empty() {
+                range_filters.push(parse_range_filter(filter_str).map_err(|e| {
+                    format!("Invalid range filter in NC2PARQUET_RANGE_FILTERS: {}", e)
+                })?);
             }
         }
+    }
 
     // Parse list filters from environment
     if let Ok(list_env) = env::var("NC2PARQUET_LIST_FILTERS")
-        && !list_env.trim().is_empty() {
-            for filter_str in list_env.split(';') {
-                let filter_str = filter_str.trim();
-                if !filter_str.is_empty() {
-                    list_filters.push(parse_list_filter(filter_str).map_err(|e| {
-                        format!("Invalid list filter in NC2PARQUET_LIST_FILTERS: {}", e)
-                    })?);
-                }
+        && !list_env.trim().is_empty()
+    {
+        for filter_str in list_env.split(';') {
+            let filter_str = filter_str.trim();
+            if !filter_str.is_empty() {
+                list_filters.push(parse_list_filter(filter_str).map_err(|e| {
+                    format!("Invalid list filter in NC2PARQUET_LIST_FILTERS: {}", e)
+                })?);
             }
         }
+    }
 
     // Parse 2D point filters from environment
     if let Ok(point2d_env) = env::var("NC2PARQUET_POINT2D_FILTERS")
-        && !point2d_env.trim().is_empty() {
-            for filter_str in point2d_env.split(';') {
-                let filter_str = filter_str.trim();
-                if !filter_str.is_empty() {
-                    point2d_filters.push(parse_point2d_filter(filter_str).map_err(|e| {
-                        format!(
-                            "Invalid 2D point filter in NC2PARQUET_POINT2D_FILTERS: {}",
-                            e
-                        )
-                    })?);
-                }
+        && !point2d_env.trim().is_empty()
+    {
+        for filter_str in point2d_env.split(';') {
+            let filter_str = filter_str.trim();
+            if !filter_str.is_empty() {
+                point2d_filters.push(parse_point2d_filter(filter_str).map_err(|e| {
+                    format!(
+                        "Invalid 2D point filter in NC2PARQUET_POINT2D_FILTERS: {}",
+                        e
+                    )
+                })?);
             }
         }
+    }
 
     // Parse 3D point filters from environment
     if let Ok(point3d_env) = env::var("NC2PARQUET_POINT3D_FILTERS")
-        && !point3d_env.trim().is_empty() {
-            for filter_str in point3d_env.split(';') {
-                let filter_str = filter_str.trim();
-                if !filter_str.is_empty() {
-                    point3d_filters.push(parse_point3d_filter(filter_str).map_err(|e| {
-                        format!(
-                            "Invalid 3D point filter in NC2PARQUET_POINT3D_FILTERS: {}",
-                            e
-                        )
-                    })?);
-                }
+        && !point3d_env.trim().is_empty()
+    {
+        for filter_str in point3d_env.split(';') {
+            let filter_str = filter_str.trim();
+            if !filter_str.is_empty() {
+                point3d_filters.push(parse_point3d_filter(filter_str).map_err(|e| {
+                    format!(
+                        "Invalid 3D point filter in NC2PARQUET_POINT3D_FILTERS: {}",
+                        e
+                    )
+                })?);
             }
         }
+    }
 
     Ok((
         range_filters,

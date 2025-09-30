@@ -338,10 +338,11 @@ fn get_coordinate_variables(
 
     for dim_name in dimension_order {
         if let Some(coord_var) = file.variable(dim_name)
-            && let Ok(coords_array) = coord_var.get::<f64, _>(..) {
-                let coords_vec: Vec<f64> = coords_array.iter().cloned().collect();
-                coordinate_vars.insert(dim_name.clone(), coords_vec);
-            }
+            && let Ok(coords_array) = coord_var.get::<f64, _>(..)
+        {
+            let coords_vec: Vec<f64> = coords_array.iter().cloned().collect();
+            coordinate_vars.insert(dim_name.clone(), coords_vec);
+        }
     }
 
     Ok(coordinate_vars)
