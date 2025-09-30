@@ -1,5 +1,5 @@
 {
-    "nc_key": "examples/data/pres_temp_4D.nc", 
+    "nc_key": "examples/data/pres_temp_4D.nc",
     "variable_name": "temperature",
     "parquet_key": "examples/output/datetime_converted.parquet",
     "filters": [],
@@ -7,13 +7,13 @@
         "name": "DateTime Conversion Example",
         "processors": [
             {
-                "type": "DatetimeConvert",
+                "type": "datetime_convert",
                 "column": "time",
                 "base": "1990-01-01T00:00:00Z",
                 "unit": "days"
             },
             {
-                "type": "RenameColumns",
+                "type": "rename_columns",
                 "mappings": {
                     "time": "datetime",
                     "temperature": "air_temp"

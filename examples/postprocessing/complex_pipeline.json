@@ -1,6 +1,6 @@
 {
     "nc_key": "examples/data/pres_temp_4D.nc",
-    "variable_name": "temperature", 
+    "variable_name": "temperature",
     "parquet_key": "examples/output/complex_pipeline.parquet",
     "filters": [
         {
@@ -16,7 +16,7 @@
         "name": "Complex Multi-Step Pipeline",
         "processors": [
             {
-                "type": "RenameColumns", 
+                "type": "rename_columns",
                 "mappings": {
                     "temperature": "temp_kelvin",
                     "latitude": "lat",
@@ -25,32 +25,38 @@
                 }
             },
             {
-                "type": "DatetimeConvert",
+                "type": "datetime_convert",
                 "column": "time_index",
                 "base": "2000-01-01T00:00:00Z",
                 "unit": "hours"
             },
             {
-                "type": "UnitConvert",
+                "type": "unit_convert",
                 "column": "temp_kelvin",
-                "from_unit": "kelvin", 
+                "from_unit": "kelvin",
                 "to_unit": "celsius"
             },
             {
-                "type": "ApplyFormula",
+                "type": "apply_formula",
                 "target_column": "temp_fahrenheit",
                 "formula": "temp_kelvin * 1.8 + 32.0",
-                "source_columns": ["temp_kelvin"]
+                "source_columns": [
+                    "temp_kelvin"
+                ]
             },
             {
-                "type": "ApplyFormula",
+                "type": "apply_formula",
                 "target_column": "is_freezing",
                 "formula": "temp_kelvin < 0.0",
-                "source_columns": ["temp_kelvin"]
+                "source_columns": [
+                    "temp_kelvin"
+                ]
             },
             {
-                "type": "Aggregate",
-                "group_by": ["lat"],
+                "type": "aggregate",
+                "group_by": [
+                    "lat"
+                ],
                 "aggregations": {
                     "temp_kelvin": "mean",
                     "temp_fahrenheit": "max"

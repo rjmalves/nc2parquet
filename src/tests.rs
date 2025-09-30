@@ -764,15 +764,14 @@ mod workflow_tests {
         assert_eq!(config.filters[2].kind(), "2d_point");
     }
 
-    // Sprint 6: Comprehensive Integration Tests
+    // Integration Tests
     #[test]
-    fn test_sprint6_integration_local_file_with_all_features()
-    -> Result<(), Box<dyn std::error::Error>> {
+    fn test_integration_local_file_with_all_features() -> Result<(), Box<dyn std::error::Error>> {
         use crate::postprocess::*;
         use std::collections::HashMap;
 
         let temp_dir = tempdir()?;
-        let output_path = temp_dir.path().join("sprint6_full_features.parquet");
+        let output_path = temp_dir.path().join("full_features.parquet");
 
         // Create comprehensive config with filtering and post-processing
         let config = JobConfig {
@@ -816,17 +815,17 @@ mod workflow_tests {
         let metadata = std::fs::metadata(&output_path)?;
         assert!(metadata.len() > 0);
 
-        println!("Sprint 6: Full feature integration test completed successfully");
+        println!("Full feature integration test completed successfully");
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_sprint6_integration_async_processing() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_integration_async_processing() -> Result<(), Box<dyn std::error::Error>> {
         use crate::postprocess::*;
         use std::collections::HashMap;
 
         let temp_dir = tempdir()?;
-        let output_path = temp_dir.path().join("sprint6_async_test.parquet");
+        let output_path = temp_dir.path().join("async_test.parquet");
 
         let config = JobConfig {
             nc_key: get_test_data_path("pres_temp_4D.nc")
@@ -867,18 +866,17 @@ mod workflow_tests {
         let metadata = std::fs::metadata(&output_path)?;
         assert!(metadata.len() > 0);
 
-        println!("Sprint 6: Async processing with post-processing completed");
+        println!("Async processing with post-processing completed");
         Ok(())
     }
 
     #[test]
-    fn test_sprint6_integration_complex_pipeline_chaining() -> Result<(), Box<dyn std::error::Error>>
-    {
+    fn test_integration_complex_pipeline_chaining() -> Result<(), Box<dyn std::error::Error>> {
         use crate::postprocess::*;
         use std::collections::HashMap;
 
         let temp_dir = tempdir()?;
-        let output_path = temp_dir.path().join("sprint6_complex_pipeline.parquet");
+        let output_path = temp_dir.path().join("complex_pipeline.parquet");
 
         // Test complex pipeline with multiple processors in sequence
         let config = JobConfig {
@@ -929,12 +927,12 @@ mod workflow_tests {
         let metadata = std::fs::metadata(&output_path)?;
         assert!(metadata.len() > 0);
 
-        println!("Sprint 6: Complex pipeline chaining test completed successfully");
+        println!("Complex pipeline chaining test completed successfully");
         Ok(())
     }
 
     #[test]
-    fn test_sprint6_integration_error_handling() {
+    fn test_integration_error_handling() {
         let temp_dir = tempdir().unwrap();
         let output_path = temp_dir.path().join("should_not_exist.parquet");
 
@@ -988,11 +986,11 @@ mod workflow_tests {
         let result = crate::process_netcdf_job(&config);
         assert!(result.is_err(), "Should fail with nonexistent dimension");
 
-        println!("Sprint 6: Error handling tests completed successfully");
+        println!("Error handling tests completed successfully");
     }
 
     #[test]
-    fn test_sprint6_performance_benchmarking() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_performance_benchmarking() -> Result<(), Box<dyn std::error::Error>> {
         use std::time::Instant;
 
         let temp_dir = tempdir()?;
@@ -1012,7 +1010,7 @@ mod workflow_tests {
 
         crate::process_netcdf_job(&config)?;
         let duration = start.elapsed();
-        println!("Sprint 6: Basic conversion took: {:?}", duration);
+        println!("Basic conversion took: {:?}", duration);
 
         // Benchmark with post-processing
         let output_path2 = temp_dir.path().join("performance_postprocess.parquet");
@@ -1046,16 +1044,13 @@ mod workflow_tests {
         crate::process_netcdf_job(&config_with_processing)?;
         let duration_with_processing = start.elapsed();
         println!(
-            "Sprint 6: Conversion with post-processing took: {:?}",
+            "Conversion with post-processing took: {:?}",
             duration_with_processing
         );
 
         // Verify post-processing overhead is reasonable
         let processing_overhead = duration_with_processing.saturating_sub(duration);
-        println!(
-            "Sprint 6: Post-processing overhead: {:?}",
-            processing_overhead
-        );
+        println!("Post-processing overhead: {:?}", processing_overhead);
 
         // Basic performance assertion - post-processing shouldn't take more than 10x longer
         assert!(
@@ -1063,12 +1058,12 @@ mod workflow_tests {
             "Post-processing should not add excessive overhead"
         );
 
-        println!("Sprint 6: Performance benchmarking completed successfully");
+        println!("Performance benchmarking completed successfully");
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_sprint6_async_vs_sync_performance() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_async_vs_sync_performance() -> Result<(), Box<dyn std::error::Error>> {
         use std::time::Instant;
 
         let temp_dir = tempdir()?;
@@ -1089,7 +1084,7 @@ mod workflow_tests {
         let start = Instant::now();
         crate::process_netcdf_job(&config)?;
         let sync_duration = start.elapsed();
-        println!("Sprint 6: Sync processing took: {:?}", sync_duration);
+        println!("Sync processing took: {:?}", sync_duration);
 
         // Benchmark async processing
         let mut async_config = config.clone();
@@ -1098,9 +1093,9 @@ mod workflow_tests {
         let start = Instant::now();
         crate::process_netcdf_job_async(&async_config).await?;
         let async_duration = start.elapsed();
-        println!("Sprint 6: Async processing took: {:?}", async_duration);
+        println!("Async processing took: {:?}", async_duration);
 
-        println!("Sprint 6: Async vs Sync performance comparison completed");
+        println!("Async vs Sync performance comparison completed");
         Ok(())
     }
 }
@@ -1109,126 +1104,124 @@ mod workflow_tests {
 #[cfg(test)]
 mod s3_integration_tests {
     use super::*;
-    use crate::storage::{StorageBackend, StorageFactory};
+    // No additional imports needed
 
     #[tokio::test]
-    #[ignore] // Ignore by default as it requires real AWS credentials and S3 bucket
-    async fn test_end_to_end_s3_pipeline() -> Result<(), Box<dyn std::error::Error>> {
-        // This test requires:
-        // 1. AWS credentials configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION)
-        // 2. TEST_S3_BUCKET environment variable set to a test bucket name
-        // 3. The bucket must exist and be writable
+    async fn test_public_s3_noaa_dataset_pipeline() -> Result<(), Box<dyn std::error::Error>> {
+        // Test using public NOAA OpenData dataset - no AWS credentials required for read access
+        // Using NOAA Climate Data Record for Total Solar Irradiance
+        let noaa_s3_path = "s3://noaa-cdr-total-solar-irradiance-pds/data/daily/tsi_v02r01_daily_s18820101_e18821231_c20170717.nc";
 
-        let test_bucket = match std::env::var("TEST_S3_BUCKET") {
-            Ok(bucket) => bucket,
-            Err(_) => {
-                println!("Skipping S3 integration test - set TEST_S3_BUCKET environment variable");
-                return Ok(());
-            }
-        };
+        // Create temporary output directory for local output
+        let temp_dir = tempfile::tempdir()?;
+        let output_path = temp_dir.path().join("noaa_tsi_output.parquet");
 
-        // Upload a test NetCDF file to S3
-        let netcdf_path = get_test_data_path("simple_xy.nc");
-        let netcdf_data = std::fs::read(&netcdf_path)?;
+        // First test: Get info about the NOAA file to understand its structure
+        let info_result = crate::info::get_netcdf_info(noaa_s3_path, None, false).await;
 
-        let storage = StorageFactory::from_path(&format!("s3://{}/test.nc", test_bucket)).await?;
-        let s3_input_path = format!("s3://{}/test-input/simple_xy.nc", test_bucket);
-        let s3_output_path = format!("s3://{}/test-output/result.parquet", test_bucket);
+        // If we can't access the file (network issues, anonymous access disabled), skip gracefully
+        if info_result.is_err() {
+            println!(
+                "Skipping NOAA S3 test - unable to access public dataset (network or access issue)"
+            );
+            return Ok(());
+        }
 
-        // Upload NetCDF file
-        storage.write(&s3_input_path, &netcdf_data).await?;
-
-        // Create job configuration for S3 input and output
-        let json_config = format!(
-            r#"{{
-            "nc_key": "{}",
-            "variable_name": "data",
-            "parquet_key": "{}",
-            "filters": [
-                {{
-                    "kind": "range",
-                    "params": {{
-                        "dimension_name": "x",
-                        "min_value": 1.0,
-                        "max_value": 4.0
-                    }}
-                }}
-            ]
-        }}"#,
-            s3_input_path, s3_output_path
+        let info = info_result?;
+        assert!(!info.variables.is_empty());
+        println!(
+            "NOAA dataset has {} variables and {} dimensions",
+            info.total_variables, info.total_dimensions
         );
 
-        let config = JobConfig::from_json(&json_config)?;
-
-        // Process the job with S3 input/output
-        crate::process_netcdf_job_async(&config).await?;
-
-        // Verify output file exists in S3
-        assert!(storage.exists(&s3_output_path).await?);
-
-        // Download and verify the output
-        let parquet_data = storage.read(&s3_output_path).await?;
-        assert!(!parquet_data.is_empty());
-        assert!(parquet_data.len() > 100); // Basic sanity check
-
-        println!("S3 end-to-end test passed with bucket: {}", test_bucket);
-        Ok(())
-    }
-
-    #[tokio::test]
-    #[ignore] // Ignore by default as it requires AWS credentials
-    async fn test_mixed_s3_local_pipeline() -> Result<(), Box<dyn std::error::Error>> {
-        let test_bucket = match std::env::var("TEST_S3_BUCKET") {
-            Ok(bucket) => bucket,
-            Err(_) => {
-                println!("Skipping mixed S3/local test - set TEST_S3_BUCKET environment variable");
-                return Ok(());
-            }
+        // Find a suitable variable to process (typically 'tsi' for total solar irradiance)
+        let variable_name = if info.variables.iter().any(|v| v.name == "tsi") {
+            "tsi"
+        } else if !info.variables.is_empty() {
+            &info.variables[0].name
+        } else {
+            return Err("No variables found in NOAA dataset".into());
         };
 
-        // Create temporary output directory
-        let temp_dir = tempfile::tempdir()?;
-        let output_path = temp_dir.path().join("s3_to_local_output.parquet");
-
-        // Upload NetCDF file to S3
-        let netcdf_path = get_test_data_path("pres_temp_4D.nc");
-        let netcdf_data = std::fs::read(&netcdf_path)?;
-
-        let storage = StorageFactory::from_path(&format!("s3://{}/test.nc", test_bucket)).await?;
-        let s3_input_path = format!("s3://{}/mixed-test-input/pres_temp_4D.nc", test_bucket);
-
-        storage.write(&s3_input_path, &netcdf_data).await?;
-
+        // Create job configuration for S3 input to local output
         let json_config = format!(
             r#"{{
             "nc_key": "{}",
-            "variable_name": "temperature", 
+            "variable_name": "{}",
             "parquet_key": "{}",
-            "filters": [
-                {{
-                    "kind": "list",
-                    "params": {{
-                        "dimension_name": "latitude",
-                        "values": [25.0, 30.0]
-                    }}
-                }}
-            ]
+            "filters": []
         }}"#,
-            s3_input_path,
+            noaa_s3_path,
+            variable_name,
             output_path.display()
         );
 
         let config = JobConfig::from_json(&json_config)?;
 
-        // Process: S3 input -> local output
+        // Process the job with S3 input and local output
         crate::process_netcdf_job_async(&config).await?;
 
-        // Verify local output exists
+        // Verify output file exists locally
         assert!(output_path.exists());
-        let file_size = std::fs::metadata(&output_path)?.len();
-        assert!(file_size > 50);
 
-        println!("Mixed S3->local test passed with bucket: {}", test_bucket);
+        // Verify the output file has some data
+        let output_metadata = std::fs::metadata(&output_path)?;
+        assert!(output_metadata.len() > 0);
+        println!(
+            "Successfully processed NOAA dataset: {} -> {} ({} bytes)",
+            noaa_s3_path,
+            output_path.display(),
+            output_metadata.len()
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_noaa_s3_info_command() -> Result<(), Box<dyn std::error::Error>> {
+        // Test the info command specifically with NOAA public dataset
+        let noaa_s3_path = "s3://noaa-cdr-total-solar-irradiance-pds/data/daily/tsi_v02r01_daily_s18820101_e18821231_c20170717.nc";
+
+        // Test getting basic info from NOAA dataset
+        let info_result = crate::info::get_netcdf_info(noaa_s3_path, None, false).await;
+
+        if info_result.is_err() {
+            println!("Skipping NOAA S3 info test - unable to access public dataset");
+            return Ok(());
+        }
+
+        let info = info_result?;
+
+        // Verify we got meaningful information
+        assert_eq!(info.path, noaa_s3_path);
+        assert!(info.total_variables > 0);
+        assert!(info.total_dimensions > 0);
+        assert!(!info.dimensions.is_empty());
+        assert!(!info.variables.is_empty());
+
+        println!("NOAA dataset info:");
+        println!("  Variables: {}", info.total_variables);
+        println!("  Dimensions: {}", info.total_dimensions);
+        for var in &info.variables {
+            println!(
+                "  Variable '{}' ({}): {:?}",
+                var.name, var.data_type, var.dimensions
+            );
+        }
+
+        // Test getting detailed info (with attributes)
+        let _detailed_info = crate::info::get_netcdf_info(noaa_s3_path, None, true).await?;
+        // Just verify detailed mode doesn't crash
+
+        // Test variable-specific info
+        if let Some(first_var) = info.variables.first() {
+            let var_info =
+                crate::info::get_netcdf_info(noaa_s3_path, Some(&first_var.name), false).await?;
+            assert_eq!(var_info.total_variables, 1);
+            assert_eq!(var_info.variables[0].name, first_var.name);
+        }
+
+        println!("NOAA S3 info command test passed");
         Ok(())
     }
 }

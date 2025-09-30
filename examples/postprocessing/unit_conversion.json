@@ -7,13 +7,13 @@
         "name": "Unit Conversion Example",
         "processors": [
             {
-                "type": "RenameColumns",
+                "type": "rename_columns",
                 "mappings": {
                     "data": "temperature_kelvin"
                 }
             },
             {
-                "type": "UnitConvert",
+                "type": "unit_convert",
                 "column": "temperature_kelvin",
                 "from_unit": "kelvin",
                 "to_unit": "celsius"

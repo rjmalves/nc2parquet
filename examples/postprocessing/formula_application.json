@@ -1,34 +1,40 @@
 {
     "nc_key": "examples/data/simple_xy.nc",
-    "variable_name": "data", 
+    "variable_name": "data",
     "parquet_key": "examples/output/formula_applied.parquet",
     "filters": [],
     "postprocessing": {
         "name": "Formula Application Example",
         "processors": [
             {
-                "type": "RenameColumns",
+                "type": "rename_columns",
                 "mappings": {
                     "data": "temperature"
                 }
             },
             {
-                "type": "ApplyFormula",
+                "type": "apply_formula",
                 "target_column": "temp_celsius",
                 "formula": "temperature - 273.15",
-                "source_columns": ["temperature"]
+                "source_columns": [
+                    "temperature"
+                ]
             },
             {
-                "type": "ApplyFormula",
-                "target_column": "temp_fahrenheit", 
+                "type": "apply_formula",
+                "target_column": "temp_fahrenheit",
                 "formula": "temp_celsius * 1.8 + 32.0",
-                "source_columns": ["temp_celsius"]
+                "source_columns": [
+                    "temp_celsius"
+                ]
             },
             {
-                "type": "ApplyFormula",
+                "type": "apply_formula",
                 "target_column": "temp_squared",
                 "formula": "temperature * temperature",
-                "source_columns": ["temperature"]
+                "source_columns": [
+                    "temperature"
+                ]
             }
         ]
     }

@@ -7,10 +7,10 @@
         "name": "Column Renaming Example",
         "processors": [
             {
-                "type": "RenameColumns",
+                "type": "rename_columns",
                 "mappings": {
                     "data": "temperature",
-                    "x": "longitude", 
+                    "x": "longitude",
                     "y": "latitude"
                 }
             }

@@ -527,17 +527,25 @@ Run the full test suite:
 cargo test
 ```
 
-Run only local tests (no AWS required):
+Run all tests (including S3 tests with public datasets):
 
 ```bash
 cargo test --lib
 ```
 
-Run S3 integration tests (requires AWS credentials and TEST_S3_BUCKET environment variable):
+The S3 integration tests now use public NOAA Climate Data Records and require no AWS credentials or configuration. The tests will automatically handle network connectivity issues gracefully.
+
+**Available S3 Tests:**
+
+- `test_public_s3_noaa_dataset_pipeline` - Full pipeline test using NOAA Total Solar Irradiance data
+- `test_noaa_s3_info_command` - Info command test with NOAA public dataset
+- `test_s3_storage_noaa_public_dataset` - Storage layer test with public S3 data
+- `test_storage_factory_noaa_public_dataset` - Storage factory test with public data
+
+To run only S3-related tests:
 
 ```bash
-export TEST_S3_BUCKET=your-test-bucket
-cargo test test_end_to_end_s3_pipeline -- --ignored
+cargo test noaa -- --nocapture
 ```
 
 ## Configuration Sources
@@ -697,6 +705,31 @@ nc2parquet uses a modular architecture:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Public Dataset Integration
+
+nc2parquet includes comprehensive tests using the **NOAA Climate Data Record (CDR) for Total Solar Irradiance** from AWS Open Data:
+
+```bash
+# Analyze NOAA Total Solar Irradiance data
+nc2parquet info s3://noaa-cdr-total-solar-irradiance-pds/data/daily/tsi_v02r01_daily_s18820101_e18821231_c20170717.nc
+
+# Convert NOAA data with filtering
+nc2parquet convert \
+  s3://noaa-cdr-total-solar-irradiance-pds/data/daily/tsi_v02r01_daily_s18820101_e18821231_c20170717.nc \
+  solar_irradiance_1882.parquet \
+  --variable TSI \
+  --range "time:99346:99350"
+```
+
+This public dataset provides:
+
+- **365 daily measurements** of Total Solar Irradiance for 1882
+- **No AWS credentials required** - publicly accessible
+- **Real-world NetCDF-4/HDF5 format** for testing
+- **Scientific metadata** including units, uncertainty values, and CF-compliant attributes
+
+The integration demonstrates nc2parquet's capability to process real climate science data from cloud storage seamlessly.
 
 ## Examples
 

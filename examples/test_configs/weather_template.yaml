@@ -1,9 +1,0 @@
-nc_key: weather_station_data.nc
-variable_name: temperature
-filters:
-- kind: range
-  params:
-    dimension_name: time
-    min_value: 20230101.0
-    max_value: 20231231.0
-parquet_key: weather_analysis.parquet
