@@ -41,3 +41,8 @@ testcontainers = { version = "0.22", features = ["blocking"] }
 testcontainers-modules = { version = "0.10", features = ["localstack"] }
 tokio-test = "0.4"
 aws-credential-types = "1.2"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
