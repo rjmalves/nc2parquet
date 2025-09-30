@@ -119,10 +119,10 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
             merged_point2d_filters,
             merged_point3d_filters,
         ) = merge_filters(
-            range_filters.clone(),
-            list_filters.clone(),
-            point2d_filters.clone(),
-            point3d_filters.clone(),
+            (**range_filters).clone(),
+            (**list_filters).clone(),
+            (**point2d_filters).clone(),
+            (**point3d_filters).clone(),
         )
         .map_err(|e| anyhow::anyhow!("Filter parsing error: {}", e))?;
 
@@ -186,7 +186,7 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
             // Add column rename processors
             if !rename_columns.is_empty() {
                 let mut mappings = HashMap::new();
-                for rename in rename_columns {
+                for rename in rename_columns.iter() {
                     mappings.insert(rename.old_name.clone(), rename.new_name.clone());
                     debug!(
                         "Added column rename: {} -> {}",
@@ -197,7 +197,7 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
             }
 
             // Add unit conversion processors
-            for unit_conversion in unit_conversions {
+            for unit_conversion in unit_conversions.iter() {
                 processors.push(ProcessorConfig::UnitConvert {
                     column: unit_conversion.column.clone(),
                     from_unit: unit_conversion.from_unit.clone(),
@@ -220,7 +220,7 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
             }
 
             // Add formula processors
-            for formula in formulas {
+            for formula in formulas.iter() {
                 processors.push(ProcessorConfig::ApplyFormula {
                     target_column: formula.target_column.clone(),
                     formula: formula.formula.clone(),
@@ -325,12 +325,12 @@ async fn handle_convert_command(cli: &Cli) -> Result<()> {
         }
 
         // Show performance metrics in verbose mode
-        if cli.verbose {
-            if let Ok(file_size) = get_file_size(&config.nc_key).await {
-                let throughput = file_size as f64 / duration.as_secs_f64() / 1_048_576.0; // MB/s
-                info!("Input file size: {:.2} MB", file_size as f64 / 1_048_576.0);
-                info!("Processing throughput: {:.2} MB/s", throughput);
-            }
+        if cli.verbose
+            && let Ok(file_size) = get_file_size(&config.nc_key).await
+        {
+            let throughput = file_size as f64 / duration.as_secs_f64() / 1_048_576.0; // MB/s
+            info!("Input file size: {:.2} MB", file_size as f64 / 1_048_576.0);
+            info!("Processing throughput: {:.2} MB/s", throughput);
         }
 
         // Show output information
@@ -541,26 +541,26 @@ fn load_configuration(
         let mut config = load_config_file(config_path)?;
 
         // Override with environment variables (medium priority)
-        if let Some(env_input_path) = &env_input {
-            if input.is_none() {
-                // Only use env if CLI argument not provided
-                config.nc_key = env_input_path.clone();
-                debug!("Using input from environment: {}", env_input_path);
-            }
+        if let Some(env_input_path) = &env_input
+            && input.is_none()
+        {
+            // Only use env if CLI argument not provided
+            config.nc_key = env_input_path.clone();
+            debug!("Using input from environment: {}", env_input_path);
         }
-        if let Some(env_output_path) = &env_output {
-            if output.is_none() {
-                // Only use env if CLI argument not provided
-                config.parquet_key = env_output_path.clone();
-                debug!("Using output from environment: {}", env_output_path);
-            }
+        if let Some(env_output_path) = &env_output
+            && output.is_none()
+        {
+            // Only use env if CLI argument not provided
+            config.parquet_key = env_output_path.clone();
+            debug!("Using output from environment: {}", env_output_path);
         }
-        if let Some(env_var_name) = &env_variable {
-            if variable.is_none() {
-                // Only use env if CLI argument not provided
-                config.variable_name = env_var_name.clone();
-                debug!("Using variable from environment: {}", env_var_name);
-            }
+        if let Some(env_var_name) = &env_variable
+            && variable.is_none()
+        {
+            // Only use env if CLI argument not provided
+            config.variable_name = env_var_name.clone();
+            debug!("Using variable from environment: {}", env_var_name);
         }
 
         // Override with command line arguments (highest priority)
@@ -657,13 +657,13 @@ async fn validate_config(config: &JobConfig) -> Result<()> {
         // Check output directory exists (for local files)
         if !config.parquet_key.starts_with("s3://") {
             let output_path = std::path::Path::new(&config.parquet_key);
-            if let Some(parent) = output_path.parent() {
-                if !parent.exists() {
-                    warnings.push(format!(
-                        "Output directory does not exist: {}",
-                        parent.display()
-                    ));
-                }
+            if let Some(parent) = output_path.parent()
+                && !parent.exists()
+            {
+                warnings.push(format!(
+                    "Output directory does not exist: {}",
+                    parent.display()
+                ));
             }
         }
 

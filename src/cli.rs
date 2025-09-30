@@ -132,19 +132,19 @@ EXAMPLES:
 
         /// Apply range filter: dimension:min:max
         #[arg(long = "range", value_parser = parse_range_filter)]
-        range_filters: Vec<RangeFilterArg>,
+        range_filters: Box<Vec<RangeFilterArg>>,
 
         /// Apply list filter: dimension:val1,val2,val3
         #[arg(long = "list", value_parser = parse_list_filter)]
-        list_filters: Vec<ListFilterArg>,
+        list_filters: Box<Vec<ListFilterArg>>,
 
         /// Apply 2D point filter: lat_dim,lon_dim:lat,lon:tolerance
         #[arg(long = "point2d", value_parser = parse_point2d_filter)]
-        point2d_filters: Vec<Point2DFilterArg>,
+        point2d_filters: Box<Vec<Point2DFilterArg>>,
 
         /// Apply 3D point filter: time_dim,lat_dim,lon_dim:time,lat,lon:tolerance
         #[arg(long = "point3d", value_parser = parse_point3d_filter)]
-        point3d_filters: Vec<Point3DFilterArg>,
+        point3d_filters: Box<Vec<Point3DFilterArg>>,
 
         /// Force overwrite existing output files
         #[arg(long, env = "NC2PARQUET_FORCE")]
@@ -156,11 +156,11 @@ EXAMPLES:
 
         /// Rename column: old_name:new_name (can be used multiple times)
         #[arg(long = "rename", value_parser = parse_rename_column)]
-        rename_columns: Vec<RenameColumnArg>,
+        rename_columns: Box<Vec<RenameColumnArg>>,
 
         /// Convert column units: column:from_unit:to_unit
         #[arg(long = "unit-convert", value_parser = parse_unit_conversion)]
-        unit_conversions: Vec<UnitConversionArg>,
+        unit_conversions: Box<Vec<UnitConversionArg>>,
 
         /// Convert temperature from Kelvin to Celsius for given column
         #[arg(long = "kelvin-to-celsius")]
@@ -168,7 +168,7 @@ EXAMPLES:
 
         /// Apply mathematical formula: target_column:formula:source1,source2,...
         #[arg(long = "formula", value_parser = parse_formula)]
-        formulas: Vec<FormulaArg>,
+        formulas: Box<Vec<FormulaArg>>,
     },
 
     /// Validate configuration file or arguments
@@ -757,12 +757,8 @@ impl Default for ValidationConfig {
 }
 
 /// Parse filters from environment variables  
-/// Environment variable format:
-/// - NC2PARQUET_RANGE_FILTERS: "dim1:min1:max1,dim2:min2:max2"
-/// - NC2PARQUET_LIST_FILTERS: "dim1:val1,val2,val3;dim2:val4,val5"  
-/// - NC2PARQUET_POINT2D_FILTERS: "lat,lon:30.0,-120.0:0.1;lat2,lon2:40.0,-100.0:0.2"
-/// - NC2PARQUET_POINT3D_FILTERS: "time,lat,lon:0.0,30.0,-120.0:0.1"
-pub fn parse_filters_from_env() -> Result<
+/// Type alias for the complex filter result tuple
+type FilterResult = Result<
     (
         Vec<RangeFilterArg>,
         Vec<ListFilterArg>,
@@ -770,15 +766,22 @@ pub fn parse_filters_from_env() -> Result<
         Vec<Point3DFilterArg>,
     ),
     String,
-> {
+>;
+
+/// Environment variable format:
+/// - NC2PARQUET_RANGE_FILTERS: "dim1:min1:max1,dim2:min2:max2"
+/// - NC2PARQUET_LIST_FILTERS: "dim1:val1,val2,val3;dim2:val4,val5"  
+/// - NC2PARQUET_POINT2D_FILTERS: "lat,lon:30.0,-120.0:0.1;lat2,lon2:40.0,-100.0:0.2"
+/// - NC2PARQUET_POINT3D_FILTERS: "time,lat,lon:0.0,30.0,-120.0:0.1"
+pub fn parse_filters_from_env() -> FilterResult {
     let mut range_filters = Vec::new();
     let mut list_filters = Vec::new();
     let mut point2d_filters = Vec::new();
     let mut point3d_filters = Vec::new();
 
     // Parse range filters from environment
-    if let Ok(range_env) = env::var("NC2PARQUET_RANGE_FILTERS") {
-        if !range_env.trim().is_empty() {
+    if let Ok(range_env) = env::var("NC2PARQUET_RANGE_FILTERS")
+        && !range_env.trim().is_empty() {
             for filter_str in range_env.split(',') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
@@ -788,11 +791,10 @@ pub fn parse_filters_from_env() -> Result<
                 }
             }
         }
-    }
 
     // Parse list filters from environment
-    if let Ok(list_env) = env::var("NC2PARQUET_LIST_FILTERS") {
-        if !list_env.trim().is_empty() {
+    if let Ok(list_env) = env::var("NC2PARQUET_LIST_FILTERS")
+        && !list_env.trim().is_empty() {
             for filter_str in list_env.split(';') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
@@ -802,11 +804,10 @@ pub fn parse_filters_from_env() -> Result<
                 }
             }
         }
-    }
 
     // Parse 2D point filters from environment
-    if let Ok(point2d_env) = env::var("NC2PARQUET_POINT2D_FILTERS") {
-        if !point2d_env.trim().is_empty() {
+    if let Ok(point2d_env) = env::var("NC2PARQUET_POINT2D_FILTERS")
+        && !point2d_env.trim().is_empty() {
             for filter_str in point2d_env.split(';') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
@@ -819,11 +820,10 @@ pub fn parse_filters_from_env() -> Result<
                 }
             }
         }
-    }
 
     // Parse 3D point filters from environment
-    if let Ok(point3d_env) = env::var("NC2PARQUET_POINT3D_FILTERS") {
-        if !point3d_env.trim().is_empty() {
+    if let Ok(point3d_env) = env::var("NC2PARQUET_POINT3D_FILTERS")
+        && !point3d_env.trim().is_empty() {
             for filter_str in point3d_env.split(';') {
                 let filter_str = filter_str.trim();
                 if !filter_str.is_empty() {
@@ -836,7 +836,6 @@ pub fn parse_filters_from_env() -> Result<
                 }
             }
         }
-    }
 
     Ok((
         range_filters,
@@ -853,15 +852,7 @@ pub fn merge_filters(
     cli_list: Vec<ListFilterArg>,
     cli_point2d: Vec<Point2DFilterArg>,
     cli_point3d: Vec<Point3DFilterArg>,
-) -> Result<
-    (
-        Vec<RangeFilterArg>,
-        Vec<ListFilterArg>,
-        Vec<Point2DFilterArg>,
-        Vec<Point3DFilterArg>,
-    ),
-    String,
-> {
+) -> FilterResult {
     let (env_range, env_list, env_point2d, env_point3d) = parse_filters_from_env()?;
 
     // CLI arguments have priority, but we append env filters if CLI is empty

@@ -156,10 +156,10 @@ pub async fn process_netcdf_job_async(
     file.close()?;
 
     // Clean up temporary file if it was created
-    if let Some(temp_path) = temp_file_path {
-        if temp_path.exists() {
-            std::fs::remove_file(temp_path)?;
-        }
+    if let Some(temp_path) = temp_file_path
+        && temp_path.exists()
+    {
+        std::fs::remove_file(temp_path)?;
     }
 
     Ok(())

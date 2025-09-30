@@ -167,6 +167,7 @@ impl DimensionIndexManager {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_combinations_with_pairs(
         &self,
         other_dims: &[(usize, Vec<usize>)],
@@ -275,8 +276,8 @@ pub fn extract_data_to_dataframe(
     filters: &Vec<Box<dyn NCFilter>>,
 ) -> Result<DataFrame, Box<dyn std::error::Error>> {
     let mut dim_manager = DimensionIndexManager::new(var)?;
-    for (_, filter) in filters.iter().enumerate() {
-        let result = filter.apply(&file)?;
+    for filter in filters.iter() {
+        let result = filter.apply(file)?;
         dim_manager.apply_filter_result(&result)?;
     }
     extract_data_with_dimension_manager(file, var, var_name, &dim_manager)
@@ -336,12 +337,11 @@ fn get_coordinate_variables(
     let mut coordinate_vars = HashMap::new();
 
     for dim_name in dimension_order {
-        if let Some(coord_var) = file.variable(dim_name) {
-            if let Ok(coords_array) = coord_var.get::<f64, _>(..) {
+        if let Some(coord_var) = file.variable(dim_name)
+            && let Ok(coords_array) = coord_var.get::<f64, _>(..) {
                 let coords_vec: Vec<f64> = coords_array.iter().cloned().collect();
                 coordinate_vars.insert(dim_name.clone(), coords_vec);
             }
-        }
     }
 
     Ok(coordinate_vars)

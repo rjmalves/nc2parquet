@@ -1,3 +1,6 @@
+#![allow(clippy::needless_borrows_for_generic_args)]
+#![allow(clippy::match_ref_pats)]
+
 use crate::extract::*;
 use crate::filters::*;
 use crate::input::*;

@@ -521,7 +521,7 @@ impl PostProcessor for DateTimeConverter {
             .lazy()
             .with_columns([col(&self.column)
                 .cast(DataType::String)
-                .alias(&format!("{}_datetime", self.column))])
+                .alias(format!("{}_datetime", self.column))])
             .collect()?;
 
         Ok(result)
@@ -652,12 +652,12 @@ impl PostProcessor for Aggregator {
                 AggregationOp::First => (col(col_name).first(), "first"),
                 AggregationOp::Last => (col(col_name).last(), "last"),
             };
-            agg_exprs.push(expr.alias(&format!("{}_{}", col_name, suffix)));
+            agg_exprs.push(expr.alias(format!("{}_{}", col_name, suffix)));
         }
 
         let result = if !self.group_by.is_empty() {
             df.lazy()
-                .group_by(self.group_by.iter().map(|s| col(s)).collect::<Vec<_>>())
+                .group_by(self.group_by.iter().map(col).collect::<Vec<_>>())
                 .agg(agg_exprs)
                 .collect()?
         } else {

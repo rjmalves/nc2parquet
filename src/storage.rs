@@ -45,6 +45,7 @@ use tokio::fs;
 
 /// Errors that can occur during storage operations
 #[derive(Error, Debug)]
+#[allow(clippy::result_large_err)]
 pub enum StorageError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
@@ -220,6 +221,7 @@ impl S3Storage {
     ///
     /// # Errors
     /// Returns `StorageError::InvalidS3Path` if the path format is invalid
+    #[allow(clippy::result_large_err)]
     fn parse_s3_path(s3_path: &str) -> StorageResult<(String, String)> {
         if !s3_path.starts_with("s3://") {
             return Err(StorageError::InvalidS3Path(format!(

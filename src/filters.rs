@@ -14,6 +14,12 @@
 //! All filters return a [`FilterResult`] enum that preserves dimension information
 //! and coordinate relationships for proper intersection logic.
 
+/// Type alias for coordinate pair result tuple
+type PairResult<'a> = Option<(&'a String, &'a String, &'a Vec<(usize, usize)>)>;
+
+/// Type alias for coordinate triplet result tuple  
+type TripletResult<'a> = Option<(&'a String, &'a String, &'a String, &'a Vec<(usize, usize, usize)>)>;
+
 use serde::Deserialize;
 
 /// Result of applying a filter to NetCDF data.
@@ -49,7 +55,7 @@ impl FilterResult {
         }
     }
 
-    pub fn as_pairs(&self) -> Option<(&String, &String, &Vec<(usize, usize)>)> {
+    pub fn as_pairs(&self) -> PairResult<'_> {
         if let FilterResult::Pairs {
             lat_dimension,
             lon_dimension,
@@ -62,7 +68,7 @@ impl FilterResult {
         }
     }
 
-    pub fn as_triplets(&self) -> Option<(&String, &String, &String, &Vec<(usize, usize, usize)>)> {
+    pub fn as_triplets(&self) -> TripletResult<'_> {
         if let FilterResult::Triplets {
             time_dimension,
             lat_dimension,

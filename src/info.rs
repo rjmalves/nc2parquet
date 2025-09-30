@@ -97,10 +97,10 @@ pub async fn get_netcdf_info(
     let mut variables = Vec::new();
     for var in file.variables() {
         // Skip if specific variable requested and this isn't it
-        if let Some(var_name) = variable {
-            if var.name() != var_name {
-                continue;
-            }
+        if let Some(var_name) = variable
+            && var.name() != var_name
+        {
+            continue;
         }
 
         let mut attributes = HashMap::new();
@@ -231,19 +231,21 @@ pub fn print_file_info_csv(info: &NetCdfInfo) -> Result<()> {
     // Print variables as CSV - this is the most useful tabular data
     println!("variable_name,data_type,dimensions,shape,attributes_count");
     for var in &info.variables {
+        let dimensions = format!("\"{}\"", var.dimensions.join(";"));
+        let shape = format!(
+            "\"{}\"",
+            var.shape
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .join(";")
+        );
         println!(
             "{},{},{},{},{}",
             var.name,
             var.data_type,
-            format!("\"{}\"", var.dimensions.join(";")),
-            format!(
-                "\"{}\"",
-                var.shape
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect::<Vec<_>>()
-                    .join(";")
-            ),
+            dimensions,
+            shape,
             var.attributes.len()
         );
     }
