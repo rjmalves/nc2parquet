@@ -51,16 +51,6 @@
                 "source_columns": [
                     "temp_kelvin"
                 ]
-            },
-            {
-                "type": "aggregate",
-                "group_by": [
-                    "lat"
-                ],
-                "aggregations": {
-                    "temp_kelvin": "mean",
-                    "temp_fahrenheit": "max"
-                }
             }
         ]
     }

@@ -1,0 +1,19 @@
+{
+    "nc_key": "examples/data/simple_xy.nc",
+    "variable_name": "data",
+    "parquet_key": "examples/output/complex_formula_test.parquet",
+    "filters": [],
+    "postprocessing": {
+        "name": "Complex Formula Test",
+        "processors": [
+            {
+                "type": "apply_formula",
+                "target_column": "complex_calc",
+                "formula": "(data + 5.0) * (data - 2.0) / 3.0",
+                "source_columns": [
+                    "data"
+                ]
+            }
+        ]
+    }
+}
