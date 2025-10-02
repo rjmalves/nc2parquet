@@ -1,22 +1,41 @@
 {
-    "nc_key": "examples/data/pres_temp_4D.nc",
-    "variable_name": "temperature",
-    "parquet_key": "examples/output/datetime_converted.parquet",
-    "filters": [],
+    "nc_key": "hres_fullrange_det_2t.nc",
+    "variable_name": "t2",
+    "parquet_key": "t2_conv.parquet",
+    "filters": [
+        {
+            "kind": "list",
+            "params": {
+                "dimension_name": "lat",
+                "values": [
+                    0.0
+                ]
+            }
+        },
+        {
+            "kind": "list",
+            "params": {
+                "dimension_name": "lon",
+                "values": [
+                    -60.0
+                ]
+            }
+        }
+    ],
     "postprocessing": {
         "name": "DateTime Conversion Example",
         "processors": [
             {
                 "type": "datetime_convert",
                 "column": "time",
-                "base": "1990-01-01T00:00:00Z",
-                "unit": "days"
+                "base": "2025-08-13T00:00:00Z",
+                "unit": "hours"
             },
             {
                 "type": "rename_columns",
                 "mappings": {
                     "time": "datetime",
-                    "temperature": "air_temp"
+                    "2t": "valor"
                 }
             }
         ]

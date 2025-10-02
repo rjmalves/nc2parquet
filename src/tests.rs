@@ -1552,6 +1552,156 @@ mod postprocess_tests {
             .collect();
         assert!((values[0] - 0.0).abs() < 1e-10);
     }
+
+    #[test]
+    fn test_datetime_converter_basic() {
+        let df = df! {
+            "time" => [0.0, 1.0, 24.0], // hours since base
+        }
+        .unwrap();
+
+        let base_datetime = chrono::DateTime::parse_from_rfc3339("2000-01-01T00:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+
+        let processor = DateTimeConverter::new(
+            "time".to_string(),
+            base_datetime,
+            crate::postprocess::TimeUnit::Hours,
+        );
+
+        let result = processor.process(df).unwrap();
+        let time_col = result.column("time").unwrap();
+
+        // Verify column is now Datetime type
+        assert!(matches!(
+            time_col.dtype(),
+            DataType::Datetime(polars::prelude::TimeUnit::Milliseconds, None)
+        ));
+
+        // Verify we can cast it and read values
+        // The timestamp should be: base_time_ms + (hours * 3600000)
+        let base_ms = 946684800000i64; // 2000-01-01T00:00:00Z in ms
+
+        // Get the underlying Int64 values (datetime is stored as i64 timestamp)
+        let datetime_physical = time_col.datetime().unwrap().physical();
+        let first_val = datetime_physical.get(0).unwrap();
+        let second_val = datetime_physical.get(1).unwrap();
+        let third_val = datetime_physical.get(2).unwrap();
+
+        // 0 hours = base time
+        assert_eq!(first_val, base_ms);
+
+        // 1 hour = base + 3600000 ms
+        assert_eq!(second_val, base_ms + 3600000);
+
+        // 24 hours = base + 86400000 ms
+        assert_eq!(third_val, base_ms + 86400000);
+    }
+
+    #[test]
+    fn test_datetime_converter_days() {
+        let df = df! {
+            "time" => [0.0, 1.0, 7.0], // days since base
+        }
+        .unwrap();
+
+        let base_datetime = chrono::DateTime::parse_from_rfc3339("1990-01-01T00:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+
+        let processor = DateTimeConverter::new(
+            "time".to_string(),
+            base_datetime,
+            crate::postprocess::TimeUnit::Days,
+        );
+
+        let result = processor.process(df).unwrap();
+        let time_col = result.column("time").unwrap();
+
+        // Verify it's datetime type
+        assert!(matches!(
+            time_col.dtype(),
+            DataType::Datetime(polars::prelude::TimeUnit::Milliseconds, None)
+        ));
+
+        let base_ms = chrono::DateTime::parse_from_rfc3339("1990-01-01T00:00:00Z")
+            .unwrap()
+            .timestamp_millis();
+
+        let datetime_physical = time_col.datetime().unwrap().physical();
+
+        // 0 days
+        assert_eq!(datetime_physical.get(0).unwrap(), base_ms);
+
+        // 1 day = 86400000 ms
+        assert_eq!(datetime_physical.get(1).unwrap(), base_ms + 86400000);
+
+        // 7 days = 604800000 ms
+        assert_eq!(datetime_physical.get(2).unwrap(), base_ms + 604800000);
+    }
+
+    #[test]
+    fn test_datetime_converter_seconds() {
+        let df = df! {
+            "time" => [0.0, 60.0, 3600.0], // seconds since base
+        }
+        .unwrap();
+
+        let base_datetime = chrono::DateTime::parse_from_rfc3339("2000-01-01T00:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+
+        let processor = DateTimeConverter::new(
+            "time".to_string(),
+            base_datetime,
+            crate::postprocess::TimeUnit::Seconds,
+        );
+
+        let result = processor.process(df).unwrap();
+        let time_col = result.column("time").unwrap();
+
+        assert!(matches!(
+            time_col.dtype(),
+            DataType::Datetime(polars::prelude::TimeUnit::Milliseconds, None)
+        ));
+
+        let base_ms = 946684800000i64;
+        let datetime_physical = time_col.datetime().unwrap().physical();
+
+        // 0 seconds
+        assert_eq!(datetime_physical.get(0).unwrap(), base_ms);
+
+        // 60 seconds = 60000 ms
+        assert_eq!(datetime_physical.get(1).unwrap(), base_ms + 60000);
+
+        // 3600 seconds (1 hour) = 3600000 ms
+        assert_eq!(datetime_physical.get(2).unwrap(), base_ms + 3600000);
+    }
+
+    #[test]
+    fn test_datetime_converter_column_not_found() {
+        let df = create_test_dataframe();
+
+        let base_datetime = chrono::DateTime::parse_from_rfc3339("2000-01-01T00:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+
+        let processor = DateTimeConverter::new(
+            "nonexistent".to_string(),
+            base_datetime,
+            crate::postprocess::TimeUnit::Hours,
+        );
+
+        let result = processor.process(df);
+        assert!(result.is_err());
+
+        if let Err(PostProcessError::ColumnNotFound(col)) = result {
+            assert_eq!(col, "nonexistent");
+        } else {
+            panic!("Expected ColumnNotFound error");
+        }
+    }
 }
 
 #[cfg(test)]

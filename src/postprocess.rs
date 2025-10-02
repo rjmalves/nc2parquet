@@ -515,13 +515,25 @@ impl PostProcessor for DateTimeConverter {
             return Err(PostProcessError::ColumnNotFound(self.column.clone()));
         }
 
-        // For now, just convert to string representation of datetime
-        // A full implementation would do proper datetime conversion
+        // Convert time offsets to datetime
+        // 1. Get the column as numeric values
+        // 2. Convert to seconds based on the time unit
+        // 3. Add to base datetime to get final datetime values
+
+        let base_timestamp_ms = self.base_datetime.timestamp_millis();
+        let unit_multiplier_ms = self.unit.to_seconds_multiplier() * 1000.0; // Convert to milliseconds
+
         let result = df
             .lazy()
-            .with_columns([col(&self.column)
-                .cast(DataType::String)
-                .alias(format!("{}_datetime", self.column))])
+            .with_columns([
+                // Convert numeric offset to milliseconds from base datetime
+                (col(&self.column) * lit(unit_multiplier_ms) + lit(base_timestamp_ms))
+                    .cast(DataType::Datetime(
+                        polars::prelude::TimeUnit::Milliseconds,
+                        None,
+                    ))
+                    .alias(&self.column),
+            ])
             .collect()?;
 
         Ok(result)
@@ -538,8 +550,11 @@ impl PostProcessor for DateTimeConverter {
     fn output_schema(&self, input_schema: &Schema) -> PostProcessResult<Schema> {
         let mut new_schema = input_schema.clone();
 
-        // Add the new datetime column
-        new_schema.with_column(format!("{}_datetime", self.column).into(), DataType::String);
+        // Replace the column with datetime type
+        new_schema.with_column(
+            self.column.clone().into(),
+            DataType::Datetime(polars::prelude::TimeUnit::Milliseconds, None),
+        );
 
         Ok(new_schema)
     }
