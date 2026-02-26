@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772114590939,
+  "lastUpdate": 1772115127432,
   "repoUrl": "https://github.com/rjmalves/nc2parquet",
   "entries": {
     "nc2parquet Benchmarks": [
@@ -467,6 +467,240 @@ window.BENCHMARK_DATA = {
             "name": "postprocess/pipeline_batched_lazy/100000",
             "value": 166373,
             "range": "± 49516",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rogerioalves.ee@gmail.com",
+            "name": "Rogerio Alves",
+            "username": "rjmalves"
+          },
+          "committer": {
+            "email": "rogerioalves.ee@gmail.com",
+            "name": "Rogerio Alves",
+            "username": "rjmalves"
+          },
+          "distinct": true,
+          "id": "83d4a11968191034905800a2f77c71b03509acd6",
+          "message": "fix: replace flaky relative timing assertion with absolute ceiling\n\nOn CI runners, resource contention causes wild variance in timing\nmeasurements. A relative comparison (50x base) still fails when\nbase is artificially fast. Use a 30s absolute ceiling instead.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-26T11:03:07-03:00",
+          "tree_id": "9da2854898dcdb5afa5fc001134a98af7e052e60",
+          "url": "https://github.com/rjmalves/nc2parquet/commit/83d4a11968191034905800a2f77c71b03509acd6"
+        },
+        "date": 1772115126460,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "combinations/unfiltered_4d_288_combos",
+            "value": 1343072,
+            "range": "± 99139",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/range_lat_6_to_3_144_combos",
+            "value": 1321282,
+            "range": "± 21141",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/range_lat_and_list_lon_16_combos",
+            "value": 1292998,
+            "range": "± 17001",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/point2d_filter_8_combos",
+            "value": 1284544,
+            "range": "± 11582",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/simple_xy_no_filter",
+            "value": 884280,
+            "range": "± 44390",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_no_filter",
+            "value": 1342030,
+            "range": "± 21155",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_range_filter",
+            "value": 1317120,
+            "range": "± 12784",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_point2d_filter",
+            "value": 1274071,
+            "range": "± 11247",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/range_latitude_30_45",
+            "value": 1270,
+            "range": "± 12",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/range_longitude_120_90",
+            "value": 1401,
+            "range": "± 12",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/list_latitude_25_35_50",
+            "value": 1281,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/list_longitude_two_values",
+            "value": 1333,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/point2d_two_locations",
+            "value": 2534,
+            "range": "± 47",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/point2d_tight_tolerance",
+            "value": 2500,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/1000",
+            "value": 15279,
+            "range": "± 353",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/10000",
+            "value": 19400,
+            "range": "± 607",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/100000",
+            "value": 46339,
+            "range": "± 8272",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/1000",
+            "value": 731,
+            "range": "± 23",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/10000",
+            "value": 749,
+            "range": "± 45",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/100000",
+            "value": 943,
+            "range": "± 240",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/1000",
+            "value": 30840,
+            "range": "± 6629",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/10000",
+            "value": 63851,
+            "range": "± 1072",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/100000",
+            "value": 381904,
+            "range": "± 9728",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/1000",
+            "value": 17305,
+            "range": "± 16221",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/10000",
+            "value": 22297,
+            "range": "± 86145",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/100000",
+            "value": 157943,
+            "range": "± 107277",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/1000",
+            "value": 247007,
+            "range": "± 4154",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/10000",
+            "value": 321831,
+            "range": "± 6759",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/100000",
+            "value": 1064408,
+            "range": "± 20441",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/1000",
+            "value": 17371,
+            "range": "± 328",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/10000",
+            "value": 21121,
+            "range": "± 750",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/100000",
+            "value": 56941,
+            "range": "± 60006",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/1000",
+            "value": 86794,
+            "range": "± 1922",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/10000",
+            "value": 92600,
+            "range": "± 7304",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/100000",
+            "value": 161878,
+            "range": "± 42428",
             "unit": "ns/iter"
           }
         ]
