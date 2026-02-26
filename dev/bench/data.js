@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771876729152,
+  "lastUpdate": 1772114590939,
   "repoUrl": "https://github.com/rjmalves/nc2parquet",
   "entries": {
     "nc2parquet Benchmarks": [
@@ -233,6 +233,240 @@ window.BENCHMARK_DATA = {
             "name": "postprocess/pipeline_batched_lazy/100000",
             "value": 163670,
             "range": "± 33134",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rogerioalves.ee@gmail.com",
+            "name": "Rogerio Alves",
+            "username": "rjmalves"
+          },
+          "committer": {
+            "email": "rogerioalves.ee@gmail.com",
+            "name": "Rogerio Alves",
+            "username": "rjmalves"
+          },
+          "distinct": true,
+          "id": "cee2681de7a7f520de4a28f91be36096255d8a8c",
+          "message": "fix: update cargo-dist to v0.31.0 and audit action to v1.2.7\n\ncargo-dist v0.30.0 used deprecated macos-13 runners (removed Dec 2025).\nv0.31.0 uses macos-14/macos-15-intel. Also update audit action to fix\nCVSS 4.0 parse errors in the advisory database.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-26T10:44:28-03:00",
+          "tree_id": "b66557d07fed68eead5bf1f48a4138bef7e02f6b",
+          "url": "https://github.com/rjmalves/nc2parquet/commit/cee2681de7a7f520de4a28f91be36096255d8a8c"
+        },
+        "date": 1772114590665,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "combinations/unfiltered_4d_288_combos",
+            "value": 1346883,
+            "range": "± 17866",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/range_lat_6_to_3_144_combos",
+            "value": 1311463,
+            "range": "± 16430",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/range_lat_and_list_lon_16_combos",
+            "value": 1291870,
+            "range": "± 19145",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/point2d_filter_8_combos",
+            "value": 1279510,
+            "range": "± 14717",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/simple_xy_no_filter",
+            "value": 887284,
+            "range": "± 29110",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_no_filter",
+            "value": 1354434,
+            "range": "± 15445",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_range_filter",
+            "value": 1327914,
+            "range": "± 7112",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_point2d_filter",
+            "value": 1284430,
+            "range": "± 11353",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/range_latitude_30_45",
+            "value": 1257,
+            "range": "± 31",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/range_longitude_120_90",
+            "value": 1377,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/list_latitude_25_35_50",
+            "value": 1294,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/list_longitude_two_values",
+            "value": 1357,
+            "range": "± 10",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/point2d_two_locations",
+            "value": 2545,
+            "range": "± 14",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/point2d_tight_tolerance",
+            "value": 2554,
+            "range": "± 13",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/1000",
+            "value": 14550,
+            "range": "± 298",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/10000",
+            "value": 18534,
+            "range": "± 462",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/100000",
+            "value": 57677,
+            "range": "± 7213",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/1000",
+            "value": 743,
+            "range": "± 49",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/10000",
+            "value": 749,
+            "range": "± 70",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/100000",
+            "value": 958,
+            "range": "± 373",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/1000",
+            "value": 29376,
+            "range": "± 427",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/10000",
+            "value": 62528,
+            "range": "± 763",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/100000",
+            "value": 374616,
+            "range": "± 14696",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/1000",
+            "value": 17051,
+            "range": "± 466",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/10000",
+            "value": 22080,
+            "range": "± 17791",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/100000",
+            "value": 198444,
+            "range": "± 104337",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/1000",
+            "value": 254644,
+            "range": "± 4035",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/10000",
+            "value": 329594,
+            "range": "± 6393",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/100000",
+            "value": 1086157,
+            "range": "± 29320",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/1000",
+            "value": 16711,
+            "range": "± 14674",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/10000",
+            "value": 21394,
+            "range": "± 834",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/100000",
+            "value": 53559,
+            "range": "± 9589",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/1000",
+            "value": 88764,
+            "range": "± 2358",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/10000",
+            "value": 94006,
+            "range": "± 5503",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/100000",
+            "value": 166373,
+            "range": "± 49516",
             "unit": "ns/iter"
           }
         ]
