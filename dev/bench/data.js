@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772115127432,
+  "lastUpdate": 1772118146725,
   "repoUrl": "https://github.com/rjmalves/nc2parquet",
   "entries": {
     "nc2parquet Benchmarks": [
@@ -701,6 +701,240 @@ window.BENCHMARK_DATA = {
             "name": "postprocess/pipeline_batched_lazy/100000",
             "value": 161878,
             "range": "± 42428",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rogerioalves.ee@gmail.com",
+            "name": "Rogerio Alves",
+            "username": "rjmalves"
+          },
+          "committer": {
+            "email": "rogerioalves.ee@gmail.com",
+            "name": "Rogerio Alves",
+            "username": "rjmalves"
+          },
+          "distinct": true,
+          "id": "0645a066236f5349d3256194d1bf9e93bad56298",
+          "message": "fix: remove unused variable from performance test\n\nThe base duration variable became unused after switching to an\nabsolute ceiling assertion.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-26T11:53:20-03:00",
+          "tree_id": "e34063cd1fb68d7b170d10d756914d8c2682cef2",
+          "url": "https://github.com/rjmalves/nc2parquet/commit/0645a066236f5349d3256194d1bf9e93bad56298"
+        },
+        "date": 1772118145765,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "combinations/unfiltered_4d_288_combos",
+            "value": 1364182,
+            "range": "± 21480",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/range_lat_6_to_3_144_combos",
+            "value": 1331126,
+            "range": "± 10570",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/range_lat_and_list_lon_16_combos",
+            "value": 1301591,
+            "range": "± 35979",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "combinations/point2d_filter_8_combos",
+            "value": 1296918,
+            "range": "± 11880",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/simple_xy_no_filter",
+            "value": 896365,
+            "range": "± 43424",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_no_filter",
+            "value": 1352279,
+            "range": "± 27020",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_range_filter",
+            "value": 1354144,
+            "range": "± 38801",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "extraction/pres_temp_4d_point2d_filter",
+            "value": 1281512,
+            "range": "± 14541",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/range_latitude_30_45",
+            "value": 1265,
+            "range": "± 39",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/range_longitude_120_90",
+            "value": 1370,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/list_latitude_25_35_50",
+            "value": 1301,
+            "range": "± 28",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/list_longitude_two_values",
+            "value": 1351,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/point2d_two_locations",
+            "value": 2540,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "filters/point2d_tight_tolerance",
+            "value": 2539,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/1000",
+            "value": 14995,
+            "range": "± 963",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/10000",
+            "value": 19582,
+            "range": "± 947",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/unit_convert/100000",
+            "value": 54656,
+            "range": "± 14773",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/1000",
+            "value": 750,
+            "range": "± 29",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/10000",
+            "value": 923,
+            "range": "± 110",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/column_rename/100000",
+            "value": 1036,
+            "range": "± 918",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/1000",
+            "value": 30611,
+            "range": "± 689",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/10000",
+            "value": 64282,
+            "range": "± 1332",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/datetime_convert/100000",
+            "value": 374389,
+            "range": "± 27094",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/1000",
+            "value": 17119,
+            "range": "± 631",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/10000",
+            "value": 22644,
+            "range": "± 17875",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/formula_arithmetic/100000",
+            "value": 214533,
+            "range": "± 128891",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/1000",
+            "value": 255214,
+            "range": "± 6822",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/10000",
+            "value": 333390,
+            "range": "± 10085",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/aggregate_groupby/100000",
+            "value": 1184651,
+            "range": "± 39402",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/1000",
+            "value": 17667,
+            "range": "± 386",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/10000",
+            "value": 24679,
+            "range": "± 2124",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_multi_step/100000",
+            "value": 56453,
+            "range": "± 20523",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/1000",
+            "value": 88505,
+            "range": "± 1585",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/10000",
+            "value": 92546,
+            "range": "± 1648",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "postprocess/pipeline_batched_lazy/100000",
+            "value": 165326,
+            "range": "± 58459",
             "unit": "ns/iter"
           }
         ]
